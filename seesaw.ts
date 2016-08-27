@@ -78,6 +78,31 @@ var canvasHeight;
 var canvasTop;
 var canvasLeft;
 
+function drawCircle(ctx, pos:Pos, radius)
+{
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI, false);
+    ctx.fillStyle = 'green';
+    ctx.fill();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#003300';
+    ctx.stroke();
+}
+
+function drawCurrentPoly(ctx)
+{
+    if(currentPoly === undefined) return;
+    ctx.beginPath();
+    ctx.moveTo(currentPoly.points[0].x,currentPoly.points[0].y);
+    for(var i:number=1;i<currentPoly.points.length;i++) {
+	ctx.lineTo(currentPoly.points[i].x,currentPoly.points[i].y);
+    }
+    ctx.stroke();
+    for(var i:number=0;i<currentPoly.points.length;i++) {
+	drawCircle(ctx, currentPoly.points[i], 8);
+    }
+}
+
 function step(cnt) {
     var stepping = false;
     var timeStep = 1.0/60;
@@ -85,12 +110,15 @@ function step(cnt) {
     world.Step(timeStep, iteration);
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     drawWorld(world, ctx);
+    drawCurrentPoly(ctx);
     setTimeout('step(' + (cnt || 0) + ')', 10);
 }
 
 var canvas = document.getElementsByTagName('canvas')[0];
 var body = document.getElementsByTagName('body')[0];
-
+class Polygon {
+    points : Pos [];
+}
 var keysDown: boolean [];
 keysDown = new Array<boolean>();
 
@@ -138,7 +166,9 @@ function createGround(world) {
     groundBd.position.Set(-500, 900);
     return world.CreateBody(groundBd)
 }
+var currentPoly : Polygon;
 var world;
+
 window.onload=function() {
     world = createWorld();
     initWorld(world);
@@ -149,6 +179,16 @@ window.onload=function() {
     canvasTop = parseInt(canvasElm.style.top);
     canvasLeft = parseInt(canvasElm.style.left);
     canvas.addEventListener('click', function(e) {
+	if(currentPoly === undefined)
+	{
+	    currentPoly = new Polygon();
+	    currentPoly.points = new Array<Pos>();
+	}
+	var pos: Pos = new Pos();
+	pos.x = e.x - canvasLeft;
+	pos.y = e.y - canvasTop;
+	currentPoly.points.push(pos);
+
     });
     canvas.addEventListener('contextmenu', function(e) {
 	/* Right click - does nothing. */
