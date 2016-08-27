@@ -87,6 +87,7 @@ var canvasWidth;
 var canvasHeight;
 var canvasTop;
 var canvasLeft;
+var toolboxImage = new Image();
 
 function drawCircle(ctx, pos:Pos, radius)
 {
@@ -170,7 +171,7 @@ if (canvas.getContext('2d')) {
 	var c = event.keyCode;
 	keysDown[c] = true;
 	// Make keyboard alternates to the control buttons:
-
+	console.log("Key pressed: "+c);
 	// Poly - start a new polygon
 	// EndPoly - end the current polygon
 	// Nail - start adding nails
@@ -197,6 +198,14 @@ if (canvas.getContext('2d')) {
 		startPhysics();
 	    }
 	}
+
+	if(c == 88) {
+	    currentPoly = undefined;
+	    drawEverything();
+	}
+	if(c == 90) {
+	    finishCurrentPoly();
+	}
     }
     body.onkeyup = function (event) {
 	var c = event.keyCode;
@@ -211,6 +220,15 @@ function startPhysics()
 	physicsOn = true;
 	step(0);
     }
+}
+
+function finishCurrentPoly()
+{
+    if(currentPoly === undefined) return;
+    userPolys.push(currentPoly);
+    solidifyPolygon(world, currentPoly);
+    currentPoly = undefined;
+    drawEverything();
 }
 
 function createWorld() {
@@ -235,11 +253,19 @@ function createGround(world) {
     groundBd.position.Set(-500, 900);
     return world.CreateBody(groundBd)
 }
+
+function drawToolbox(ctx) {
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    ctx.drawImage(toolboxImage, 0, 0);
+}
+
 var currentPoly : Polygon;
 var world;
 var userPolys : Polygon[];
 window.onload=function() {
     world = createWorld();
+    toolboxImage.src = 'graphics/toolbar.png';
+    toolboxImage.onload = function() { drawToolbox(toolboxCanvas); };
     initWorld(world);
     ctx = $('canvas').getContext('2d');
     var canvasElm = $('canvas');
@@ -247,6 +273,7 @@ window.onload=function() {
     canvasHeight = parseInt(canvasElm.height);
     canvasTop = parseInt(canvasElm.style.top);
     canvasLeft = parseInt(canvasElm.style.left);
+    var toolboxCanvas = $('canvas2').getContext('2d');
     userPolys = new Array<Polygon>();
     canvas.addEventListener('click', function(e) {
 	if(currentPoly === undefined)
@@ -263,14 +290,7 @@ window.onload=function() {
     canvas.addEventListener('contextmenu', function(e) {
 	/* Right click - does nothing. */
 	console.log("Right click");
-	if(currentPoly === undefined)
-	{
-	    return;
-	}
-	userPolys.push(currentPoly);
-	solidifyPolygon(world, currentPoly);
-	currentPoly = undefined;
-	drawEverything();
+	finishCurrentPoly();
     });
     drawEverything();
 };
