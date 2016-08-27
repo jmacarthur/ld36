@@ -128,6 +128,14 @@ function drawUserPolys(ctx)
     }
 }
 
+function recreatePolygons()
+{
+    for(var p:number = 0;p<userPolys.length;p++) {
+	var addPoly : Polygon = userPolys[p];
+	solidifyPolygon(world, addPoly);
+    }
+}
+    
 
 function drawEverything()
 {
@@ -179,6 +187,7 @@ if (canvas.getContext('2d')) {
 		world = createWorld();
 		initWorld(world);
 		physicsOn = false;
+		recreatePolygons();
 		drawEverything();
 	    } else {
 		if (Math.random() < 0.5) 
