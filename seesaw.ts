@@ -19,6 +19,13 @@ class Pos {
 
 var toolbarSelect : number = 0; // Records the current tool
 
+function sgn(x:number): number
+{
+    if(x>0) return 1;
+    else if(x<0) return -1;
+    else return 0;
+}
+
 function createBox(world, x, y, width, height, fixed = false) {
     if (typeof(fixed) == 'undefined') fixed = true;
     var boxSd = new b2BoxDef();
@@ -72,12 +79,25 @@ function initWorld(world) {
     var gradient = createPoly(world, 200, 200, [[0, 0], [200, -30], [200, 30]], true);
 };
 
+function isClockwise(poly: Polygon) : boolean
+{
+    var total : number = 0;
+    for(var p:number=0;p<poly.points.length;p++) {
+	var p1 : Pos = poly.points[p];
+	var p2 : Pos = poly.points[(p+1) % poly.points.length];
+	total += (p2.x - p1.x)*(p2.y+p1.y);
+    }
+    return total>0;
+}
+
 function solidifyPolygon(world, poly: Polygon)
 {
     var points : Number[][] = new Array();
     for(var p:number=0;p<poly.points.length;p++) {
 	points.push([poly.points[p].x, poly.points[p].y]);
     }
+    // Box2djs doesn't like anticlockwise polygons
+    if(isClockwise(poly)) points.reverse();
     console.log("Creating poly",points);
     var newPoly = createPoly(world, 0, 0, points, false);  
 }
@@ -115,6 +135,23 @@ function drawCurrentPoly(ctx)
     for(var i:number=0;i<currentPoly.points.length;i++) {
 	drawCircle(ctx, currentPoly.points[i], 8);
     }
+}
+
+function drawNextLine(pos) : void
+{
+    var l : number =currentPoly.points.length;
+    var last:Pos = currentPoly.points[l-1];
+    if(isValidNextPoint(pos)) {
+	ctx.strokeStyle = '#ffffff'
+    } else {
+	ctx.strokeStyle = '#ff0000'
+    }
+    ctx.beginPath();
+    ctx.moveTo(last.x,last.y);
+    ctx.lineTo(pos.x,pos.y);
+    ctx.stroke();
+    ctx.strokeStyle = '#ffffff'
+   
 }
 
 function drawUserPolys(ctx)
@@ -344,6 +381,46 @@ function addNail(pos: Pos)
     //TODO
 }
 
+function isConvex(poly: Polygon) : boolean
+{
+    if(poly.points.length < 3)  return true;
+    var previousCross : number = 0;
+    for(var i :number=0; i < poly.points.length; i++)
+    {
+	var p0:Pos = poly.points[i];
+	var p1:Pos = poly.points[(i+1) % poly.points.length];
+	var p2:Pos = poly.points[(i+2) % poly.points.length];
+	var dx1:number = p1.x-p0.x;
+	var dy1:number = p1.y-p0.y;
+	var dx2:number = p2.x-p1.x;
+	var dy2:number = p2.y-p1.y;
+	var cross = dx1*dy2 - dy1*dx2;
+	if(previousCross != 0 && sgn(previousCross) != sgn(cross)) {
+	    return false;
+	}
+	previousCross = cross;
+    }
+    return true;
+}
+
+function isValidNextPoint(pos: Pos)
+{
+    var l : number = currentPoly.points.length;
+    currentPoly.points.push(pos);
+    if(!isConvex(currentPoly)) {
+	currentPoly.points.pop();
+	return false;
+    }
+    currentPoly.points.pop();
+    return true;
+}
+
+function addPointToCurrentPoly(pos: Pos)
+{
+    if(isValidNextPoint(pos))
+	currentPoly.points.push(pos);
+}
+
 
 var currentPoly : Polygon;
 var world;
@@ -373,13 +450,12 @@ window.onload=function() {
 	pos.x = e.x - canvasLeft;
 	pos.y = e.y - canvasTop;
 	if(toolbarSelect == 0) {
-	    
 	    if(currentPoly === undefined)
 	    {
 		currentPoly = new Polygon();
 		currentPoly.points = new Array<Pos>();
 	    }
-	    currentPoly.points.push(pos);
+	    addPointToCurrentPoly(pos);
 	    drawEverything();
 	} else if (toolbarSelect == 2) {
 	    // Remove polygon or nail at that position
@@ -387,6 +463,17 @@ window.onload=function() {
 	} else if (toolbarSelect == 3) {
 	    // Remove polygon or nail at that position
 	    removePolygonOrNail(pos);
+	}
+    });
+    canvas.addEventListener('mousemove', function(e) {
+	var pos: Pos = new Pos();
+	pos.x = e.x - canvasLeft;
+	pos.y = e.y - canvasTop;
+	if(toolbarSelect == 0 && currentPoly !== undefined
+	   && currentPoly.points.length > 1) {
+	    console.log("Drawing next line pos");
+	    drawEverything();
+	    drawNextLine(pos);
 	}
     });
     canvas.addEventListener('contextmenu', function(e) {
