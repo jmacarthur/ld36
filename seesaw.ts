@@ -190,14 +190,26 @@ function recreatePolygons()
 function recreateNails()
 {
     console.log("Recreating "+userNails.length+" nails")
+    var validNail : boolean[] = new Array<boolean>();
     for(var n : number = 0; n < userNails.length; n++) {
+	validNail[n] = false;
 	var pos:Pos = userNails[n];
 	for(var p : number = 0; p < userPolys.length; p++) {
 	    if(pointInsidePolygon(pos, userPolys[p])) {
 		pin (physicsPolygons[p], world.GetGroundBody(), pos);
+		validNail[n] = true;
 	    }
+	}	
+    }
+    // Purge nails
+    var newNails : Pos[] = new Array<Pos>();
+    for(var n : number = 0; n < userNails.length; n++) {
+	if(validNail[n]) {
+	    newNails.push(userNails[n]);
 	}
     }
+    userNails = newNails;
+    
 }
 
 function drawEverything()
