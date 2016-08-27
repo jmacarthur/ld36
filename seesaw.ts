@@ -18,7 +18,7 @@ class Pos {
 }
 
 var toolbarSelect : number = 0; // Records the current tool
-
+var userNails: Pos[] = new Array<Pos>();
 function sgn(x:number): number
 {
     if(x>0) return 1;
@@ -99,8 +99,11 @@ function solidifyPolygon(world, poly: Polygon)
     // Box2djs doesn't like anticlockwise polygons
     if(isClockwise(poly)) points.reverse();
     console.log("Creating poly",points);
-    var newPoly = createPoly(world, 0, 0, points, false);  
+    var newPoly = createPoly(world, 0, 0, points, false);
+    physicsPolygons.push(newPoly);
 }
+
+var physicsPolygons = new Array();
 
 var initId = 0;
 var world = createWorld();
@@ -168,20 +171,41 @@ function drawUserPolys(ctx)
     }
 }
 
+function drawNails(ctx)
+{
+    for(var n:number = 0;n<userNails.length;n++) {
+	drawCircle(ctx, userNails[n], 4);
+    }
+}
+
 function recreatePolygons()
 {
+    physicsPolygons = new Array();
     for(var p:number = 0;p<userPolys.length;p++) {
 	var addPoly : Polygon = userPolys[p];
 	solidifyPolygon(world, addPoly);
     }
 }
     
+function recreateNails()
+{
+    console.log("Recreating "+userNails.length+" nails")
+    for(var n : number = 0; n < userNails.length; n++) {
+	var pos:Pos = userNails[n];
+	for(var p : number = 0; p < userPolys.length; p++) {
+	    if(pointInsidePolygon(pos, userPolys[p])) {
+		pin (physicsPolygons[p], world.GetGroundBody(), pos);
+	    }
+	}
+    }
+}
 
 function drawEverything()
 {
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     drawWorld(world, ctx);
     drawCurrentPoly(ctx);
+    drawNails(ctx);
 }
 
 function step(cnt) {
@@ -211,8 +235,9 @@ function toolbarFunction(fn: number):void {
     } else if (fn==3) {
 	toolbarSelect = 3;
 	drawToolbar(toolbarContext);
+    } else if (fn==4) {
+	togglePhysics();
     }
-    
     
 }
 var idNumbers = 0; // Increasing unique ID number
@@ -231,11 +256,29 @@ function resetLevel() : void
     world = createWorld();
     initWorld(world);
     recreatePolygons();
+    recreateNails();
     drawEverything();
+    
 }
 
 var keysDown: boolean [];
 keysDown = new Array<boolean>();
+
+
+function togglePhysics(): void
+{
+    if (physicsOn) {
+	resetLevel();
+	physicsOn = false;
+    } else {
+	if (Math.random() < 0.5) 
+	    createBall(world, 390, 10, 10, false, 1.0);
+	else 
+	    createBall(world, 390, 10, 20, false);
+	startPhysics();
+    }
+}
+
 
 if (canvas.getContext('2d')) {
     ctx = canvas.getContext('2d');
@@ -256,16 +299,7 @@ if (canvas.getContext('2d')) {
 	}
 
 	if(c == 32) { // Start / Reset
-	    if (physicsOn) {
-		resetLevel();
-		physicsOn = false;
-	    } else {
-		if (Math.random() < 0.5) 
-		    createBall(world, 390, 10, 10, false, 1.0);
-		else 
-		    createBall(world, 390, 10, 20, false);
-		startPhysics();
-	    }
+	    toolbarFunction(4);
 	}
 
 	if(c == 90) {
@@ -378,7 +412,8 @@ function removePolygonOrNail(pos: Pos)
 
 function addNail(pos: Pos)
 {
-    //TODO
+    userNails.push(pos);
+    recreateNails();
 }
 
 function isConvex(poly: Polygon) : boolean
