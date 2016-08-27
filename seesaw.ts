@@ -17,7 +17,7 @@ class Pos {
     y: number;
 }
 
-var toolbarSelect : number; // Records the current tool
+var toolbarSelect : number = 0; // Records the current tool
 
 function createBox(world, x, y, width, height, fixed = false) {
     if (typeof(fixed) == 'undefined') fixed = true;
