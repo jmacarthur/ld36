@@ -1,4 +1,13 @@
-function createBall(world, x, y, rad, fixed) {
+var b2CircleDef;
+var b2BodyDef;
+var b2PolyDef;
+
+var createBox;
+var createWorld;
+var drawWorld;
+var b2RevoluteJointDef;
+
+function createBall(world, x, y, rad, fixed = false) {
     var ballSd = new b2CircleDef();
     if (!fixed) ballSd.density = 1.0;
     ballSd.radius = rad || 10;
@@ -9,7 +18,7 @@ function createBall(world, x, y, rad, fixed) {
     return world.CreateBody(ballBd);
 };
 
-function createPoly(world, x, y, points, fixed) {
+function createPoly(world, x, y, points, fixed = false) {
     var polySd = new b2PolyDef();
     if (!fixed) polySd.density = 1.0;
     polySd.vertexCount = points.length;
