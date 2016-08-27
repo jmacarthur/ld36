@@ -17,6 +17,8 @@ class Pos {
     y: number;
 }
 
+var toolbarSelect : number; // Records the current tool
+
 function createBox(world, x, y, width, height, fixed = false) {
     if (typeof(fixed) == 'undefined') fixed = true;
     var boxSd = new b2BoxDef();
@@ -87,7 +89,7 @@ var canvasWidth;
 var canvasHeight;
 var canvasTop;
 var canvasLeft;
-var toolboxImage = new Image();
+var toolbarImage = new Image();
 
 function drawCircle(ctx, pos:Pos, radius)
 {
@@ -157,6 +159,23 @@ function step(cnt) {
     }
 }
 
+function toolbarFunction(fn: number):void {
+    console.log("Toolbar function "+fn);
+    if(fn==0) {
+	finishCurrentPoly();
+	toolbarSelect = 0;
+	drawToolbar(toolbarContext);
+    } else if (fn==1) {
+	currentPoly = undefined;
+	drawEverything();
+    } else if (fn==2) {
+	toolbarSelect = 2;
+	drawToolbar(toolbarContext);
+    }
+    
+    
+}
+
 var canvas = document.getElementsByTagName('canvas')[0];
 var body = document.getElementsByTagName('body')[0];
 class Polygon {
@@ -199,12 +218,14 @@ if (canvas.getContext('2d')) {
 	    }
 	}
 
-	if(c == 88) {
-	    currentPoly = undefined;
-	    drawEverything();
-	}
 	if(c == 90) {
-	    finishCurrentPoly();
+	    toolbarFunction(0);
+	}
+	if(c == 88) {
+	    toolbarFunction(1);
+	}
+	if(c == 67) {
+	    toolbarFunction(2);
 	}
     }
     body.onkeyup = function (event) {
@@ -254,18 +275,46 @@ function createGround(world) {
     return world.CreateBody(groundBd)
 }
 
-function drawToolbox(ctx) {
+function drawToolbar(ctx) {
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    ctx.drawImage(toolboxImage, 0, 0);
+    ctx.drawImage(toolbarImage, 0, 0);
+    ctx.beginPath();
+    ctx.arc(toolbarSelect*64+32,32, 32, 0, 2 * Math.PI, false);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#003300';
+    ctx.stroke();
+    ctx.strokeStyle = '#ffffff';
+
+}
+
+function pointInsidePolygon(pos: Pos, poly: Polygon) : boolean
+{
+    return false;
+}
+
+function deletePolygon(poly: Polygon): void
+{
+}
+
+function removePolygonOrNail(pos: Pos)
+{
+    for(var p : number = 0; p < userPolys.length; p++) {
+	var poly = userPolys[p];
+	if(pointInsidePolygon(pos, poly)) {
+	    deletePolygon(poly);
+	    return;
+	}
+    }
 }
 
 var currentPoly : Polygon;
 var world;
 var userPolys : Polygon[];
+var toolbarContext;
+
 window.onload=function() {
     world = createWorld();
-    toolboxImage.src = 'graphics/toolbar.png';
-    toolboxImage.onload = function() { drawToolbox(toolboxCanvas); };
+    toolbarImage.src = 'graphics/toolbar.png';
     initWorld(world);
     ctx = $('canvas').getContext('2d');
     var canvasElm = $('canvas');
@@ -273,19 +322,31 @@ window.onload=function() {
     canvasHeight = parseInt(canvasElm.height);
     canvasTop = parseInt(canvasElm.style.top);
     canvasLeft = parseInt(canvasElm.style.left);
-    var toolboxCanvas = $('canvas2').getContext('2d');
+    var toolbarCanvas = $('canvas2');
+    toolbarContext = toolbarCanvas.getContext('2d');
+    toolbarCanvas.addEventListener('click', function(e) {
+	var fn:number = Math.floor((e.x-parseInt(toolbarCanvas.style.left)) / 64);
+	toolbarFunction(fn);
+    });
+    toolbarImage.onload = function() { drawToolbar(toolbarContext); };
     userPolys = new Array<Polygon>();
     canvas.addEventListener('click', function(e) {
-	if(currentPoly === undefined)
-	{
-	    currentPoly = new Polygon();
-	    currentPoly.points = new Array<Pos>();
-	}
 	var pos: Pos = new Pos();
 	pos.x = e.x - canvasLeft;
 	pos.y = e.y - canvasTop;
-	currentPoly.points.push(pos);
-	drawEverything()
+	if(toolbarSelect == 0) {
+	    
+	    if(currentPoly === undefined)
+	    {
+		currentPoly = new Polygon();
+		currentPoly.points = new Array<Pos>();
+	    }
+	    currentPoly.points.push(pos);
+	    drawEverything();
+	} else if (toolbarSelect == 2) {
+	    // Remove polygon or nail at that position
+	    removePolygonOrNail(pos);
+	}
     });
     canvas.addEventListener('contextmenu', function(e) {
 	/* Right click - does nothing. */
