@@ -171,15 +171,22 @@ function toolbarFunction(fn: number):void {
     } else if (fn==2) {
 	toolbarSelect = 2;
 	drawToolbar(toolbarContext);
+    } else if (fn==3) {
+	toolbarSelect = 3;
+	drawToolbar(toolbarContext);
     }
     
     
 }
-
+var idNumbers = 0; // Increasing unique ID number
 var canvas = document.getElementsByTagName('canvas')[0];
 var body = document.getElementsByTagName('body')[0];
 class Polygon {
     points : Pos [];
+    id : number;
+    constructor() {
+	this.id = idNumbers++;
+    }
 }
 var keysDown: boolean [];
 keysDown = new Array<boolean>();
@@ -226,6 +233,9 @@ if (canvas.getContext('2d')) {
 	}
 	if(c == 67) {
 	    toolbarFunction(2);
+	}
+	if(c == 86) {
+	    toolbarFunction(3);
 	}
     }
     body.onkeyup = function (event) {
@@ -289,23 +299,44 @@ function drawToolbar(ctx) {
 
 function pointInsidePolygon(pos: Pos, poly: Polygon) : boolean
 {
-    return false;
+    var inside: boolean = false;
+    var i : number = 0;
+    var j : number = poly.points.length-1;
+    for (; i < poly.points.length; j = i++ ) {
+	if ( ((poly.points[i].y>pos.y) != (poly.points[j].y>pos.y)) &&
+	     (pos.x < (poly.points[j].x - poly.points[i].x) * (pos.y - poly.points[i].y) / (poly.points[j].y-poly.points[i].y) + poly.points[i].x) )
+	    inside = !inside;
+    }
+    return inside;
 }
 
-function deletePolygon(poly: Polygon): void
+function deletePolygon(poly: Polygon) : void
 {
+    console.log("Deleting polygon");
+    var newPolys : Polygon[] = new Array<Polygon>();
+    for(var p : number = 0; p < userPolys.length; p++) {
+	if(userPolys[p].id != poly.id) newPolys.push(userPolys[p]);
+    }
+    userPolys = newPolys;
 }
 
 function removePolygonOrNail(pos: Pos)
 {
+    console.log("Looking for a polygon at "+pos);
     for(var p : number = 0; p < userPolys.length; p++) {
 	var poly = userPolys[p];
 	if(pointInsidePolygon(pos, poly)) {
 	    deletePolygon(poly);
 	    return;
 	}
-    }
+    }    
 }
+
+function addNail(pos: Pos)
+{
+    //TODO
+}
+
 
 var currentPoly : Polygon;
 var world;
@@ -344,6 +375,9 @@ window.onload=function() {
 	    currentPoly.points.push(pos);
 	    drawEverything();
 	} else if (toolbarSelect == 2) {
+	    // Remove polygon or nail at that position
+	    addNail(pos);
+	} else if (toolbarSelect == 3) {
 	    // Remove polygon or nail at that position
 	    removePolygonOrNail(pos);
 	}
