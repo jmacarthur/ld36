@@ -188,6 +188,15 @@ class Polygon {
 	this.id = idNumbers++;
     }
 }
+
+function resetLevel() : void
+{
+    world = createWorld();
+    initWorld(world);
+    recreatePolygons();
+    drawEverything();
+}
+
 var keysDown: boolean [];
 keysDown = new Array<boolean>();
 
@@ -211,11 +220,8 @@ if (canvas.getContext('2d')) {
 
 	if(c == 32) { // Start / Reset
 	    if (physicsOn) {
-		world = createWorld();
-		initWorld(world);
+		resetLevel();
 		physicsOn = false;
-		recreatePolygons();
-		drawEverything();
 	    } else {
 		if (Math.random() < 0.5) 
 		    createBall(world, 390, 10, 10, false, 1.0);
@@ -318,6 +324,7 @@ function deletePolygon(poly: Polygon) : void
 	if(userPolys[p].id != poly.id) newPolys.push(userPolys[p]);
     }
     userPolys = newPolys;
+    resetLevel();
 }
 
 function removePolygonOrNail(pos: Pos)
