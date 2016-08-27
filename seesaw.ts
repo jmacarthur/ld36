@@ -77,7 +77,7 @@ function solidifyPolygon(world, poly: Polygon)
 	points.push([poly.points[p].x, poly.points[p].y]);
     }
     console.log("Creating poly",points);
-    var newPoly = createPoly(world, 0, 0, points, true);  
+    var newPoly = createPoly(world, 0, 0, points, false);  
 }
 
 var initId = 0;
@@ -129,16 +129,23 @@ function drawUserPolys(ctx)
 }
 
 
-function step(cnt) {
-    var stepping = false;
-    var timeStep = 1.0/60;
-    var iteration = 1;
-    world.Step(timeStep, iteration);
+function drawEverything()
+{
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     drawWorld(world, ctx);
     drawCurrentPoly(ctx);
-    drawUserPolys(ctx);
-    setTimeout('step(' + (cnt || 0) + ')', 10);
+}
+
+function step(cnt) {
+    if(physicsOn) {
+	var stepping = false;
+	var timeStep = 1.0/60;
+	var iteration = 1;
+	world.Step(timeStep, iteration);
+	drawEverything();
+	//drawUserPolys(ctx); // Not necessary as box2d draws them
+	setTimeout('step(' + (cnt || 0) + ')', 10);
+    }
 }
 
 var canvas = document.getElementsByTagName('canvas')[0];
@@ -154,19 +161,46 @@ if (canvas.getContext('2d')) {
     body.onkeydown = function (event) {
 	var c = event.keyCode;
 	keysDown[c] = true;
+	// Make keyboard alternates to the control buttons:
+
+	// Poly - start a new polygon
+	// EndPoly - end the current polygon
+	// Nail - start adding nails
+	// Remover - remove things by clicking on/in them
+	// Start - Run the game
+	// Exit - exit to menu
+
 	if(c == 81) {
 	    console.log("Quit!");
 	}
-	if(c == 32) {
-	    if (Math.random() < 0.5) 
-		createBall(world, 390, 10, 10, false, 1.0);
-	    else 
-		createBall(world, 390, 10, 20, false);
+
+	if(c == 32) { // Start / Reset
+	    if (physicsOn) {
+		world = createWorld();
+		initWorld(world);
+		physicsOn = false;
+		drawEverything();
+	    } else {
+		if (Math.random() < 0.5) 
+		    createBall(world, 390, 10, 10, false, 1.0);
+		else 
+		    createBall(world, 390, 10, 20, false);
+		startPhysics();
+	    }
 	}
     }
     body.onkeyup = function (event) {
 	var c = event.keyCode;
 	keysDown[c] = false;
+    }
+}
+
+var physicsOn : boolean = false;
+function startPhysics()
+{
+    if(!physicsOn) {
+	physicsOn = true;
+	step(0);
     }
 }
 
@@ -215,6 +249,7 @@ window.onload=function() {
 	pos.x = e.x - canvasLeft;
 	pos.y = e.y - canvasTop;
 	currentPoly.points.push(pos);
+	drawEverything()
     });
     canvas.addEventListener('contextmenu', function(e) {
 	/* Right click - does nothing. */
@@ -226,7 +261,7 @@ window.onload=function() {
 	userPolys.push(currentPoly);
 	solidifyPolygon(world, currentPoly);
 	currentPoly = undefined;
+	drawEverything();
     });
-    step(0);
-
+    drawEverything();
 };
