@@ -70,6 +70,16 @@ function initWorld(world) {
     var gradient = createPoly(world, 200, 200, [[0, 0], [200, -30], [200, 30]], true);
 };
 
+function solidifyPolygon(world, poly: Polygon)
+{
+    var points : Number[][] = new Array();
+    for(var p:number=0;p<poly.points.length;p++) {
+	points.push([poly.points[p].x, poly.points[p].y]);
+    }
+    console.log("Creating poly",points);
+    var newPoly = createPoly(world, 0, 0, points, true);  
+}
+
 var initId = 0;
 var world = createWorld();
 var ctx;
@@ -87,6 +97,7 @@ function drawCircle(ctx, pos:Pos, radius)
     ctx.lineWidth = 5;
     ctx.strokeStyle = '#003300';
     ctx.stroke();
+    ctx.strokeStyle = '#ffffff';
 }
 
 function drawCurrentPoly(ctx)
@@ -112,6 +123,7 @@ function drawUserPolys(ctx)
 	for(var i:number=1;i<drawPoly.points.length;i++) {
 	    ctx.lineTo(drawPoly.points[i].x,drawPoly.points[i].y);
 	}
+	ctx.closePath();
 	ctx.stroke();
     }
 }
@@ -151,7 +163,6 @@ if (canvas.getContext('2d')) {
 	    else 
 		createBall(world, 390, 10, 20, false);
 	}
-
     }
     body.onkeyup = function (event) {
 	var c = event.keyCode;
@@ -213,7 +224,9 @@ window.onload=function() {
 	    return;
 	}
 	userPolys.push(currentPoly);
+	solidifyPolygon(world, currentPoly);
 	currentPoly = undefined;
     });
     step(0);
+
 };
