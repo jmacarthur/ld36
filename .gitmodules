@@ -1,0 +1,3 @@
+[submodule "box2djs"]
+	path = box2djs
+	url = git@github.com:jmacarthur/box2djs.git
