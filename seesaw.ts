@@ -103,6 +103,20 @@ function drawCurrentPoly(ctx)
     }
 }
 
+function drawUserPolys(ctx)
+{
+    for(var p:number = 0;p<userPolys.length;p++) {
+	var drawPoly : Polygon = userPolys[p];
+	ctx.beginPath();
+	ctx.moveTo(drawPoly.points[0].x,drawPoly.points[0].y);
+	for(var i:number=1;i<drawPoly.points.length;i++) {
+	    ctx.lineTo(drawPoly.points[i].x,drawPoly.points[i].y);
+	}
+	ctx.stroke();
+    }
+}
+
+
 function step(cnt) {
     var stepping = false;
     var timeStep = 1.0/60;
@@ -111,6 +125,7 @@ function step(cnt) {
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     drawWorld(world, ctx);
     drawCurrentPoly(ctx);
+    drawUserPolys(ctx);
     setTimeout('step(' + (cnt || 0) + ')', 10);
 }
 
@@ -168,7 +183,7 @@ function createGround(world) {
 }
 var currentPoly : Polygon;
 var world;
-
+var userPolys : Polygon[];
 window.onload=function() {
     world = createWorld();
     initWorld(world);
@@ -178,6 +193,7 @@ window.onload=function() {
     canvasHeight = parseInt(canvasElm.height);
     canvasTop = parseInt(canvasElm.style.top);
     canvasLeft = parseInt(canvasElm.style.left);
+    userPolys = new Array<Polygon>();
     canvas.addEventListener('click', function(e) {
 	if(currentPoly === undefined)
 	{
@@ -188,12 +204,16 @@ window.onload=function() {
 	pos.x = e.x - canvasLeft;
 	pos.y = e.y - canvasTop;
 	currentPoly.points.push(pos);
-
     });
     canvas.addEventListener('contextmenu', function(e) {
 	/* Right click - does nothing. */
 	console.log("Right click");
-	return false;
+	if(currentPoly === undefined)
+	{
+	    return;
+	}
+	userPolys.push(currentPoly);
+	currentPoly = undefined;
     });
     step(0);
 };
