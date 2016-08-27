@@ -6,12 +6,18 @@ var drawWorld;
 var b2RevoluteJointDef;
 var $;
 
+var b2BoxDef;
+var b2AABB;
+var b2Vec2;
+var b2World;
+
+
 class Pos {
     x: number;
     y: number;
 }
 
-function createBox(world, x, y, width, height, fixed) {
+function createBox(world, x, y, width, height, fixed = false) {
     if (typeof(fixed) == 'undefined') fixed = true;
     var boxSd = new b2BoxDef();
     if (!fixed) boxSd.density = 1.0;
@@ -111,8 +117,8 @@ function createWorld() {
     var doSleep = true;
     var world = new b2World(worldAABB, gravity, doSleep);
     createGround(world);
-    createBox(world, 0, 125, 10, 250);
-    createBox(world, 500, 125, 10, 250);
+    createBox(world, 0, 125, 10, 250, true);
+    createBox(world, 500, 125, 10, 250, true);
     return world;
 }
 
