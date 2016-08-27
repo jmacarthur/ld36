@@ -2,14 +2,24 @@ var b2CircleDef;
 var b2BodyDef;
 var b2PolyDef;
 
-var createBox;
-var createWorld;
 var drawWorld;
 var b2RevoluteJointDef;
 var $;
 
-interface observedThing {
-    observe: any;
+class Pos {
+    x: number;
+    y: number;
+}
+
+function createBox(world, x, y, width, height, fixed) {
+    if (typeof(fixed) == 'undefined') fixed = true;
+    var boxSd = new b2BoxDef();
+    if (!fixed) boxSd.density = 1.0;
+    boxSd.extents.Set(width, height);
+    var boxBd = new b2BodyDef();
+    boxBd.AddShape(boxSd);
+    boxBd.position.Set(x,y);
+    return world.CreateBody(boxBd)
 }
 
 function createBall(world, x, y, rad, fixed = false) {
@@ -36,21 +46,22 @@ function createPoly(world, x, y, points, fixed = false) {
     return world.CreateBody(polyBd)
 };
 
-function initWorld(world) {
-    createBall(world, 350, 100, 50, true);
-    createPoly(world, 100, 100, [[0, 0], [10, 30], [-10, 30]], true);
-    createPoly(world, 150, 150, [[0, 0], [10, 30], [-10, 30]], true);
-    var pendulum = createBox(world, 150, 100, 20, 20, false);
+function pin(body1, body2, pos : Pos)
+{
     var jointDef = new b2RevoluteJointDef();
-    jointDef.body1 = pendulum;
-    jointDef.body2 = world.GetGroundBody();
-    jointDef.anchorPoint = pendulum.GetCenterPosition();
+    jointDef.body1 = body1;
+    jointDef.body2 = body2;
+    jointDef.anchorPoint = pos;
     world.CreateJoint(jointDef);
+}
 
-    var seesaw = createPoly(world, 300, 200, [[0, 0], [100, 30], [-100, 30]]);
-    jointDef.body1 = seesaw;
-    jointDef.anchorPoint = seesaw.GetCenterPosition();
-    world.CreateJoint(jointDef);
+function initWorld(world) {
+    createBox(world, 25, 270, 10, 20, true);
+    createBox(world, 85, 270, 10, 20, true);
+    createBox(world, 145, 270, 10, 20, true);
+    var pendulum = createBox(world, 150, 100, 20, 20, false);
+    pin (pendulum, world.GetGroundBody(), pendulum.GetCenterPosition());
+    var gradient = createPoly(world, 200, 200, [[0, 0], [200, -30], [200, 30]], true);
 };
 
 var initId = 0;
@@ -92,21 +103,44 @@ if (canvas.getContext('2d')) {
     }
 }
 
+function createWorld() {
+    var worldAABB = new b2AABB();
+    worldAABB.minVertex.Set(-1000, -1000);
+    worldAABB.maxVertex.Set(1000, 1000);
+    var gravity = new b2Vec2(0, 300);
+    var doSleep = true;
+    var world = new b2World(worldAABB, gravity, doSleep);
+    createGround(world);
+    createBox(world, 0, 125, 10, 250);
+    createBox(world, 500, 125, 10, 250);
+    return world;
+}
+
+function createGround(world) {
+    var groundSd = new b2BoxDef();
+    groundSd.extents.Set(1000, 50);
+    groundSd.restitution = 0.2;
+    var groundBd = new b2BodyDef();
+    groundBd.AddShape(groundSd);
+    groundBd.position.Set(-500, 340);
+    return world.CreateBody(groundBd)
+}
+
+
 window.onload=function() {
     world = createWorld();
     initWorld(world);
     ctx = $('canvas').getContext('2d');
-    var canvasElm = $('canvas');
-    
+    var canvasElm = $('canvas');    
     canvasWidth = parseInt(canvasElm.width);
     canvasHeight = parseInt(canvasElm.height);
     canvasTop = parseInt(canvasElm.style.top);
     canvasLeft = parseInt(canvasElm.style.left);
     canvas.addEventListener('click', function(e) {
 	if (Math.random() < 0.5) 
-	    createBall(world, e.x - canvasLeft, e.y - canvasTop, false);
+	    createBall(world, e.x - canvasLeft, e.y - canvasTop, 10, false);
 	else 
-	    createBox(world, e.x - canvasLeft, e.y - canvasTop, 10, 10, false);
+	    createBall(world, e.x - canvasLeft, e.y - canvasTop, 20, false);
     });
     canvas.addEventListener('contextmenu', function(e) {
 	/* Right click - does nothing. */
