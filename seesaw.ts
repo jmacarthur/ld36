@@ -71,6 +71,23 @@ function step(cnt) {
     setTimeout('step(' + (cnt || 0) + ')', 10);
 }
 
+var canvas = document.getElementsByTagName('canvas')[0];
+var body = document.getElementsByTagName('body')[0];
+
+var keysDown: boolean [];
+keysDown = new Array<boolean>();
+
+if (canvas.getContext('2d')) {
+    ctx = canvas.getContext('2d');
+    body.onkeydown = function (event) {
+	var c = event.keyCode;
+	keysDown[c] = true;
+	if(c == 81) {
+	    console.log("Quit!");
+	}
+    }
+}
+
 Event.observe(window, 'load', function() {
     world = createWorld();
     initWorld(world);
