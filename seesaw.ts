@@ -426,6 +426,7 @@ function addNail(pos: Pos)
 {
     userNails.push(pos);
     recreateNails();
+    drawEverything();
 }
 
 function isConvex(poly: Polygon) : boolean
