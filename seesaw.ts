@@ -86,9 +86,13 @@ if (canvas.getContext('2d')) {
 	    console.log("Quit!");
 	}
     }
+    body.onkeyup = function (event) {
+	var c = event.keyCode;
+	keysDown[c] = false;
+    }
 }
 
-Event.observe(window, 'load', function() {
+window.onload=function() {
     world = createWorld();
     initWorld(world);
     ctx = $('canvas').getContext('2d');
@@ -98,15 +102,16 @@ Event.observe(window, 'load', function() {
     canvasHeight = parseInt(canvasElm.height);
     canvasTop = parseInt(canvasElm.style.top);
     canvasLeft = parseInt(canvasElm.style.left);
-    Event.observe('canvas', 'click', function(e) {
+    canvas.addEventListener('click', function(e) {
 	if (Math.random() < 0.5) 
-	    createBall(world, Event.pointerX(e) - canvasLeft, Event.pointerY(e) - canvasTop, false);
+	    createBall(world, e.x - canvasLeft, e.y - canvasTop, false);
 	else 
-	    createBox(world, Event.pointerX(e) - canvasLeft, Event.pointerY(e) - canvasTop, 10, 10, false);
+	    createBox(world, e.x - canvasLeft, e.y - canvasTop, 10, 10, false);
     });
-    Event.observe('canvas', 'contextmenu', function(e) {
+    canvas.addEventListener('contextmenu', function(e) {
 	/* Right click - does nothing. */
+	console.log("Right click");
 	return false;
     });
     step(0);
-});
+};
