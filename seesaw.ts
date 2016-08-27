@@ -28,9 +28,9 @@ function createBox(world, x, y, width, height, fixed = false) {
     return world.CreateBody(boxBd)
 }
 
-function createBall(world, x, y, rad, fixed = false) {
+function createBall(world, x, y, rad, fixed = false, density = 1.0) {
     var ballSd = new b2CircleDef();
-    if (!fixed) ballSd.density = 1.0;
+    if (!fixed) ballSd.density = density;
     ballSd.radius = rad || 10;
     ballSd.restitution = 0.2;
     var ballBd = new b2BodyDef();
@@ -102,6 +102,13 @@ if (canvas.getContext('2d')) {
 	if(c == 81) {
 	    console.log("Quit!");
 	}
+	if(c == 32) {
+	    if (Math.random() < 0.5) 
+		createBall(world, 390, 10, 10, false, 1.0);
+	    else 
+		createBall(world, 390, 10, 20, false);
+	}
+
     }
     body.onkeyup = function (event) {
 	var c = event.keyCode;
@@ -128,25 +135,20 @@ function createGround(world) {
     groundSd.restitution = 0.2;
     var groundBd = new b2BodyDef();
     groundBd.AddShape(groundSd);
-    groundBd.position.Set(-500, 340);
+    groundBd.position.Set(-500, 900);
     return world.CreateBody(groundBd)
 }
-
-
+var world;
 window.onload=function() {
     world = createWorld();
     initWorld(world);
     ctx = $('canvas').getContext('2d');
-    var canvasElm = $('canvas');    
+    var canvasElm = $('canvas');
     canvasWidth = parseInt(canvasElm.width);
     canvasHeight = parseInt(canvasElm.height);
     canvasTop = parseInt(canvasElm.style.top);
     canvasLeft = parseInt(canvasElm.style.left);
     canvas.addEventListener('click', function(e) {
-	if (Math.random() < 0.5) 
-	    createBall(world, e.x - canvasLeft, e.y - canvasTop, 10, false);
-	else 
-	    createBall(world, e.x - canvasLeft, e.y - canvasTop, 20, false);
     });
     canvas.addEventListener('contextmenu', function(e) {
 	/* Right click - does nothing. */
