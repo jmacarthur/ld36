@@ -6,6 +6,11 @@ var createBox;
 var createWorld;
 var drawWorld;
 var b2RevoluteJointDef;
+var $;
+
+interface observedThing {
+    observe: any;
+}
 
 function createBall(world, x, y, rad, fixed = false) {
     var ballSd = new b2CircleDef();
@@ -78,7 +83,7 @@ Event.observe(window, 'load', function() {
     canvasLeft = parseInt(canvasElm.style.left);
     Event.observe('canvas', 'click', function(e) {
 	if (Math.random() < 0.5) 
-	    createBall(world, Event.pointerX(e) - canvasLeft, Event.pointerY(e) - canvasTop);
+	    createBall(world, Event.pointerX(e) - canvasLeft, Event.pointerY(e) - canvasTop, false);
 	else 
 	    createBox(world, Event.pointerX(e) - canvasLeft, Event.pointerY(e) - canvasTop, 10, 10, false);
     });
@@ -86,5 +91,5 @@ Event.observe(window, 'load', function() {
 	/* Right click - does nothing. */
 	return false;
     });
-    step();
+    step(0);
 });
