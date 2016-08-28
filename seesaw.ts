@@ -257,7 +257,7 @@ function drawEverything()
 {
     for(var y=0;y<512;y+=128) {
 	for(var x=0;x<640;x+=128) {
-	    ctx.drawImage(backgroundTile, x, y);
+	    ctx.drawImage(backgroundTile, x, y+64);
 	}
     }
     drawWorld(world, ctx);
@@ -270,13 +270,13 @@ function drawEverything()
 	    ctx.save();
 	    ctx.globalAlpha = 0.4;
 	    ctx.beginPath();	    
-	    ctx.rect(0,i*96+64,640,64);
+	    ctx.rect(0,i*96+128,640,64);
 	    ctx.strokeStyle = "#808000";
 	    ctx.fillStyle = "#c0c000";
 	    ctx.fill();
 	    ctx.stroke();
 	    ctx.fillStyle = 'Black';
-	    ctx.fillText('Prototype '+(i+1), 150, 96*i+128-(64-40)/2);
+	    ctx.fillText('Prototype '+(i+1), 150, 96*i+128-(64-40)/2+64);
 	    ctx.restore();
 	}
     }
@@ -328,7 +328,7 @@ function returnToTitleScreen() : void {
     clearLevel();
     resetLevel();
     drawEverything();
-    drawToolbar(toolbarContext);
+    drawToolbar(ctx);
     startPhysics();
 }
     
@@ -338,16 +338,16 @@ function toolbarFunction(fn: number):void {
     if(fn==0) {
 	finishCurrentPoly();
 	toolbarSelect = 0;
-	drawToolbar(toolbarContext);
+	drawToolbar(ctx);
     } else if (fn==1) {
 	currentPoly = undefined;
 	drawEverything();
     } else if (fn==2) {
 	toolbarSelect = 2;
-	drawToolbar(toolbarContext);
+	drawToolbar(ctx);
     } else if (fn==3) {
 	toolbarSelect = 3;
-	drawToolbar(toolbarContext);
+	drawToolbar(ctx);
     } else if (fn==4) {
 	togglePhysics();
     } else if (fn==5) {	
@@ -453,8 +453,7 @@ function startPhysics()
 	coins = new Array();
 	physicsOn = true;
 	frameCount = 0;
-	var t = ++currentActiveThread;
-	
+	var t = ++currentActiveThread;	
 	step(0,t);
     }
 }
@@ -475,6 +474,8 @@ function finishCurrentPoly()
     drawEverything();
 }
 
+var offsetY : number = 64;
+
 function createWorld(levelNo:number=0) {
     console.log("Creating world for level "+levelNo);
     var worldAABB = new b2AABB();
@@ -486,25 +487,25 @@ function createWorld(levelNo:number=0) {
     createGround(world);
 
     // Side walls
-    createBox(world, 0, 125, 10, 250, true);
-    createBox(world, 500, 125, 10, 250, true);
+    createBox(world, 0, 125+offsetY, 10, 250, true);
+    createBox(world, 500, 125+offsetY, 10, 250, true);
 
     if(levelNo == 0) {
 	// Title screen
-	createPoly(world, 64,64, [[200,20], [400,0], [400,20]], true);	    
-	createPoly(world, 0,128, [[0,0], [250,40], [0,40]], true);	    
-	var seesaw = createBox(world, 300,300, 100,10, false, 0.1);
-	pin(seesaw, world.GetGroundBody(), new Pos(300,300));
+	createPoly(world, 64,64+offsetY, [[200,20], [400,0], [400,20]], true);	    
+	createPoly(world, 0,128+offsetY, [[0,0], [250,40], [0,40]], true);	    
+	var seesaw = createBox(world, 300,300+offsetY, 100,10, false, 0.1);
+	pin(seesaw, world.GetGroundBody(), new Pos(300,300+offsetY));
     } else {
 	// Create slots for each coin
 	var xpos : number = 0;
-	createBox(world, xpos, 500, 10, 250, true);
+	createBox(world, xpos, 500+offsetY, 10, 250, true);
 	for(var c:number=0;c<levels[levelNo].length;c++) {
 	    var coinName = levels[levelNo][c];
 	    var radius = coinTypes[coinName].radius;
 	    console.log("box with radius "+radius);
 	    xpos += 20 + radius*2.2;
-	    createBox(world, xpos, 500, 10, 250, true);
+	    createBox(world, xpos, 500+offsetY, 10, 250, true);
 	}
     }
     return world;
@@ -652,13 +653,13 @@ window.onload=function() {
 	var fn:number = Math.floor((e.x-parseInt(toolbarCanvas.style.left)) / 64);
 	toolbarFunction(fn);
     });
-    toolbarImage.onload = function() { drawToolbar(toolbarContext); };
+    toolbarImage.onload = function() { drawToolbar(ctx); };
     titleImage.onload = function() { drawEverything(); };
     userPolys = new Array<Polygon>();
     canvas.addEventListener('click', function(e) {
 	var pos: Pos = new Pos(e.x - canvasLeft, e.y - canvasTop);
 	if(mode == GameMode.Title) {
-	    var selected = Math.floor((pos.y - 64)/ 96.0)+1;
+	    var selected = Math.floor((pos.y - 64-offsetY)/ 96.0)+1;
 	    if(selected>0 && selected <=3 ) {
 		levelNo = selected;
 		console.log("Beginning level "+levelNo);
@@ -667,25 +668,30 @@ window.onload=function() {
 		resetLevel();
 	    }
 	} else {
-	    if(toolbarSelect == 0) {
-		if(currentPoly === undefined)
-		{
-		    currentPoly = new Polygon();
-		    currentPoly.points = new Array<Pos>();
+	    if(pos.y > offsetY) {
+		if(toolbarSelect == 0) {		
+		    if(currentPoly === undefined)
+		    {
+			currentPoly = new Polygon();
+			currentPoly.points = new Array<Pos>();
+		    }
+		    // TODO: if you click inside a polygon here, I'd like it to select a corner
+		    // and allow editing
+		    addPointToCurrentPoly(pos);
+		    drawEverything();
+		} else if (toolbarSelect == 2) {
+		    // Remove polygon or nail at that position
+		    addNail(pos);
+		} else if (toolbarSelect == 3) {
+		    // Remove polygon or nail at that position
+		    removePolygonOrNail(pos);
 		}
-		// TODO: if you click inside a polygon here, I'd like it to select a corner
-		// and allow editing
-		addPointToCurrentPoly(pos);
-		drawEverything();
-	    } else if (toolbarSelect == 2) {
-		// Remove polygon or nail at that position
-	    addNail(pos);
-	    } else if (toolbarSelect == 3) {
-		// Remove polygon or nail at that position
-		removePolygonOrNail(pos);
+	    } else {
+		var fn:number = Math.floor((e.x-parseInt(toolbarCanvas.style.left)) / 64);
+		toolbarFunction(fn);
 	    }
 	}
-	drawToolbar(toolbarContext);
+	drawToolbar(ctx);
     });
     canvas.addEventListener('mousemove', function(e) {
 	var pos: Pos = new Pos(e.x - canvasLeft, e.y - canvasTop);
