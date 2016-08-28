@@ -24,11 +24,11 @@ class Pos {
 };
 
 var coinTypes = {
-    "Denarius": {radius: 9.5, weight: 7, value: 10 },
-    "Aureus": { radius: 10, weight: 3, value: 250 },
-    "Sesterius": {radius: 17.5, weight: 25, value: 2.5},
-    "Dupondius": { radius: 14.5, weight: 13, value: 1.25},
-    "As": {radius: 13.5, weight: 10.5, value: 0.625}
+    "Denarius": {radius: 9.5, weight: 7, value: 10, image: silverCoinImage },
+    "Aureus": { radius: 10, weight: 3, value: 250, image: goldCoinImage },
+    "Sesterius": {radius: 17.5, weight: 25, value: 2.5, image: copperCoinImage },
+    "Dupondius": { radius: 14.5, weight: 13, value: 1.25, image: bronzeCoinImage }, //Try not to mix Dupondius and As
+    "As": {radius: 13.5, weight: 10.5, value: 0.625, image: bronzeCoinImage }
 };
 
 var levels = [
@@ -45,7 +45,8 @@ function drawCoin(ctx,  cx:number, cy:number, name:string) : void
     ctx.save();
     ctx.translate(cx,cy);
     var r = coinTypes[name].radius;
-    ctx.drawImage(coin1Image, -r, -r, r*2, r*2);
+    var bitmap = coinTypes[name].image;
+    ctx.drawImage(bitmap, -r, -r, r*2, r*2);
     ctx.restore();
 }
 
@@ -308,6 +309,7 @@ function step(cnt, threadID : number) {
 	    var coinData = coinTypes[levels[levelNo][c]];
 	    var coin = createBall(world, 390, 10, coinData.radius, false, coinData.weight / (Math.PI*coinData.radius*coinData.radius));
 	    coin.type = c;
+	    coin.image = coinData.image;
 	    coinsOut += 1;
 	    coins.push(coin);
 	}

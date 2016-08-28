@@ -4,6 +4,14 @@ var b2Math;
 
 var coin1Image = new Image();
 coin1Image.src = 'graphics/coin64.png';
+var goldCoinImage = new Image();
+var silverCoinImage = new Image();
+var bronzeCoinImage = new Image();
+var copperCoinImage = new Image();
+goldCoinImage.src = 'graphics/goldcoin64.png';
+silverCoinImage.src = 'graphics/silvercoin64.png';
+bronzeCoinImage.src = 'graphics/bronzecoin64.png';
+copperCoinImage.src = 'graphics/coppercoin64.png';
 
 function drawWorld(world, context) {
 	for (var j = world.m_jointList; j; j = j.m_next) {
@@ -11,7 +19,7 @@ function drawWorld(world, context) {
 	}
 	for (var b = world.m_bodyList; b; b = b.m_next) {
 		for (var s = b.GetShapeList(); s != null; s = s.GetNext()) {
-			drawShape(s, context);
+		    drawShape(s, context, b);
 		}
 	}
 }
@@ -54,7 +62,7 @@ function drawJoint(joint, context) {
 	}
 	context.stroke();
 }
-function drawShape(shape, context) {
+function drawShape(shape, context, body) {
 	context.strokeStyle = '#ffffff';
 	switch (shape.m_type) {
 	case b2Shape.e_circleShape:
@@ -67,7 +75,7 @@ function drawShape(shape, context) {
 		    var rot = Math.atan2(ax.y,ax.x);
 		    context.translate(pos.x,pos.y);
 		    context.rotate(rot);
-		    context.drawImage(coin1Image, -r, -r, r*2, r*2);
+		    context.drawImage(body.image, -r, -r, r*2, r*2);
 		    context.restore();
 		}
 		break;
