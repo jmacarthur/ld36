@@ -257,8 +257,9 @@ function drawEverything()
 {
     ctx.clearRect(64*6, 0, canvasWidth, canvasHeight);
     for(var y=0;y<512;y+=128) {
-	for(var x=0;x<640;x+=128) {
-	    ctx.drawImage(backgroundTile, x, y+64);
+	var offset  = 64*((y>>7)&1)
+	for(var x=-64;x<640;x+=128) {
+	    ctx.drawImage(backgroundTile, x+offset, y+64);
 	}
     }
     drawWorld(world, ctx);
@@ -490,7 +491,7 @@ function createWorld(levelNo:number=0) {
 
     // Side walls
     createBox(world, 0, 125+offsetY, 10, 250, true);
-    createBox(world, 500, 125+offsetY, 10, 250, true);
+    createBox(world, 640, 125+offsetY, 10, 250, true);
 
     if(levelNo == 0) {
 	// Title screen
@@ -626,7 +627,6 @@ function addPointToCurrentPoly(pos: Pos)
 var currentPoly : Polygon;
 var world;
 var userPolys : Polygon[];
-var toolbarContext;
 var logoImage = new Image();
 
 enum GameMode {
@@ -648,12 +648,6 @@ window.onload=function() {
     canvasHeight = parseInt(canvasElm.height);
     canvasTop = parseInt(canvasElm.style.top);
     canvasLeft = parseInt(canvasElm.style.left);
-    var toolbarCanvas = $('canvas2');
-    toolbarContext = toolbarCanvas.getContext('2d');
-    toolbarCanvas.addEventListener('click', function(e) {
-	var fn:number = Math.floor((e.x-parseInt(toolbarCanvas.style.left)) / 64);
-	toolbarFunction(fn);
-    });
     toolbarImage.onload = function() { drawToolbar(ctx); };
     titleImage.onload = function() { drawEverything(); };
     userPolys = new Array<Polygon>();
@@ -688,7 +682,7 @@ window.onload=function() {
 		    removePolygonOrNail(pos);
 		}
 	    } else {
-		var fn:number = Math.floor((e.x-parseInt(toolbarCanvas.style.left)) / 64);
+		var fn:number = Math.floor(pos.x / 64);
 		toolbarFunction(fn);
 	    }
 	}
