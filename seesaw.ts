@@ -38,6 +38,8 @@ var levels = [
     ["Denarius", "Aureus", "Dupondius"],
 ];
 
+var levelScores = [ -1, -1, 20 ];
+
 function drawCoin(ctx,  cx:number, cy:number, name:string) : void
 {
     ctx.save();
@@ -278,7 +280,17 @@ function drawEverything()
 	    ctx.fill();
 	    ctx.stroke();
 	    ctx.fillStyle = 'Black';
-	    ctx.fillText('Prototype '+(i+1), 150, 96*i+128-(64-40)/2+64);
+	    var menuItem :string = "Prototype "+(i+1)+": ";
+	    if(levelScores[i]==-1) {
+		menuItem += "Untried";
+	    } else {
+		menuItem += "Best score "+levelScores[i];
+		if(levelScores[i]==20) {
+		    menuItem += " Perfect!";
+		}
+	    }
+	    
+	    ctx.fillText(menuItem, 20, 96*i+128-(64-40)/2+64);
 	    ctx.restore();
 	}
     }
@@ -472,6 +484,9 @@ function startPhysics()
 
 function stopPhysics()
 {
+    var score:number = correctCount - wrongCount
+    console.log("Stopping physics - score"+score);
+    if(levelNo>0 && levelScores[levelNo-1] < score) levelScores[levelNo-1] = score;
     if(physicsOn) {
 	physicsOn = false;
     }
