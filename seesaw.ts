@@ -16,6 +16,29 @@ var b2World;
 class Pos {
     x: number;
     y: number;
+};
+
+var coinTypes = {
+    "Denarius": {radius: 9.5, weight: 7, value: 10 },
+    "Aureus": { radius: 10, weight: 3, value: 250 },
+    "Sesterius": {radius: 17.5, weight: 25, value: 2.5},
+    "Dupondius": { radius: 14.5, weight: 13, value: 1.25},
+    "As": {radius: 13.5, weight: 10.5, value: 0.625}
+};
+
+var levels = [
+    ["Denarius", "Sesterius"],
+    ["Denarius", "Sesterius", "As"],
+    ["Denarius", "Aureus", "Dupondius"],
+];
+
+function drawCoin(ctx,  cx:number, cy:number, name:string) : void
+{
+    ctx.save();
+    ctx.translate(cx,cy);
+    var r = coinTypes[name].radius;
+    ctx.drawImage(coin1Image, -r, -r, r*2, r*2);
+    ctx.restore();
 }
 
 var toolbarSelect : number = 0; // Records the current tool
@@ -72,9 +95,6 @@ function pin(body1, body2, pos : Pos)
 }
 
 function initWorld(world) {
-    createBox(world, 25, 270, 10, 60, true);
-    createBox(world, 85, 270, 10, 60, true);
-    createBox(world, 145, 270, 10, 60, true);
 };
 
 function isClockwise(poly: Polygon) : boolean
@@ -113,7 +133,7 @@ var canvasLeft;
 var toolbarImage = new Image();
 var titleImage = new Image();
 var frameCount : number = 0;
-
+var levelNo : number = 0;
 var backgroundTile = new Image();
 backgroundTile.src="graphics/wall1.png";
 
@@ -215,6 +235,18 @@ function recreateNails()
     
 }
 
+function drawAllCoins(ctx) {
+    // Draws coins on the bottom of the screen, for reference
+    var xpos = 0;
+    for(var c:number=0;c<levels[levelNo].length;c++) {
+	var coinName = levels[levelNo][c];
+	var radius = coinTypes[coinName].radius;
+	xpos += radius*1.1+10;
+	drawCoin(ctx, xpos, 500, coinName);
+	xpos += radius*1.1+10;
+    }
+}
+
 function drawEverything()
 {
     for(var y=0;y<512;y+=128) {
@@ -225,6 +257,7 @@ function drawEverything()
     drawWorld(world, ctx);
     drawCurrentPoly(ctx);
     drawNails(ctx);
+    drawAllCoins(ctx);
 }
 
 function step(cnt) {
@@ -233,13 +266,12 @@ function step(cnt) {
 	var timeStep = 1.0/60;
 	var iteration = 1;
 	if(frameCount % 100 == 0 && coinsOut < 20) {
-	    if (Math.random() < 0.5) {
-		var coin = createBall(world, 390, 10, 10, false, 1.0);
-		coin.type = 2;
-	    } else {
-		var coin = createBall(world, 390, 10, 20, false);
-		coin.type = 1;
-	    }
+	    
+	    var noCoinTypes = levels[levelNo].length;
+	    var c = Math.floor(Math.random()*noCoinTypes);
+	    var coinData = coinTypes[levels[levelNo][c]];
+	    var coin = createBall(world, 390, 10, coinData.radius, false, coinData.weight / (Math.PI*coinData.radius*coinData.radius));
+	    coin.type = c;
 	    coinsOut += 1;
 	    coins.push(coin);
 	}
@@ -305,12 +337,18 @@ class Polygon {
 
 function resetLevel() : void
 {
-    world = createWorld();
+    world = createWorld(levelNo);
     initWorld(world);
     recreatePolygons();
     recreateNails();
     drawEverything();
     coins = new Array();
+}
+
+function clearLevel(): void
+{
+    userPolys = new Array();
+    userNails = new Array();
 }
 
 var keysDown: boolean [];
@@ -396,7 +434,7 @@ function finishCurrentPoly()
     drawEverything();
 }
 
-function createWorld() {
+function createWorld(levelNo:number=0) {
     var worldAABB = new b2AABB();
     worldAABB.minVertex.Set(-1000, -1000);
     worldAABB.maxVertex.Set(1000, 1000);
@@ -404,8 +442,21 @@ function createWorld() {
     var doSleep = true;
     var world = new b2World(worldAABB, gravity, doSleep);
     createGround(world);
+
+    // Side walls
     createBox(world, 0, 125, 10, 250, true);
     createBox(world, 500, 125, 10, 250, true);
+    
+    // Create slots for each coin
+    var xpos : number = 0;
+    createBox(world, xpos, 500, 10, 250, true);
+    for(var c:number=0;c<levels[levelNo].length;c++) {
+	var coinName = levels[levelNo][c];
+	var radius = coinTypes[coinName].radius;
+	console.log("box with radius "+radius);
+	xpos += 20 + radius*2.2;
+	createBox(world, xpos, 500, 10, 250, true);
+    }
     return world;
 }
 
@@ -553,7 +604,10 @@ window.onload=function() {
 	pos.y = e.y - canvasTop;
 
 	if(mode == GameMode.Title) {
+	    levelNo = Math.floor(pos.y / 64.0);
+	    console.log("Beginning level "+levelNo);
 	    mode = GameMode.Level;
+	    clearLevel();
 	    resetLevel();
 	} else {
 	    if(toolbarSelect == 0) {
