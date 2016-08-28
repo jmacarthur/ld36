@@ -31,6 +31,23 @@ var coinTypes = {
     "As": {radius: 13.5, weight: 10.5, value: 0.625, image: bronzeCoinImage }
 };
 
+class Message {
+    constructor(x:number, y:number, message:string,colour:string) {
+	this.age = 0;
+	this.x = x;
+	this.y = y;
+	this.message=message;
+	this.colour = colour;
+    }
+    x:number;
+    y:number;
+    age:number;
+    message:string;
+    colour:string;
+}
+
+var messages = [];
+
 var levels = [
     ["Denarius", "Aureus", "Sesterius", "Dupondius", "As"],
     ["Denarius", "Sesterius"],
@@ -83,7 +100,7 @@ function createBall(world, x, y, rad, fixed = false, density = 1.0) {
 
 function createPoly(world, x, y, points, fixed = false) {
     var polySd = new b2PolyDef();
-    if (!fixed) polySd.density = 1.0;
+    if (!fixed) polySd.density = 0.01;
     polySd.vertexCount = points.length;
     for (var i = 0; i < points.length; i++) {
 	polySd.vertices[i].Set(points[i][0], points[i][1]);
@@ -256,6 +273,16 @@ function drawAllCoins(ctx) {
     }
 }
 
+function purgeMessages()
+{
+    var newMessages = new Array();
+    for(var m:number=0;m<messages.length;m++)
+    {
+	if (messages[m].age < 32) newMessages.push(messages[m]);
+    }
+    messages = newMessages;
+}
+
 function drawEverything()
 {
     ctx.clearRect(64*6, 0, canvasWidth, canvasHeight);
@@ -296,6 +323,27 @@ function drawEverything()
 	}
     }
     drawToolbar(ctx);
+    ctx.fillStyle = "#c0c000";
+    if(levelNo > 0) {
+	ctx.beginPath();
+	ctx.moveTo(370,64);
+	ctx.lineTo(410,64);
+	ctx.lineTo(390,96);
+	ctx.fill();
+    }
+    
+    
+    for(var m:number=0;m<messages.length;m++) {
+	var message = messages[m];
+	if(message.age < 32) {
+	    ctx.beginPath();	    
+	    ctx.fillStyle = message.colour;
+	    ctx.fillText(message.message, message.x, message.y);
+	    ctx.fill();
+	    message.y -= 1;
+	    message.age += 1;
+	}
+    }
 }
 
 function step(cnt, threadID : number) {
@@ -323,15 +371,21 @@ function step(cnt, threadID : number) {
 		var xpos = coins[c].m_position.x;
 		var slot = Math.floor((xpos + 25)/ 60);
 		console.log("Coin ("+coins[c].type+") reached bottom of screen at xpos "+xpos+" - slot "+slot);
-		if(coins[c].type == slot)
+		if(coins[c].type == slot) {
 		    correctCount += 1;
-		else
+		    if(levelNo > 0) messages.push(new Message(xpos-24, 500, "+1", "#00ff00"));
+		} else {
 		    wrongCount += 1;
+		    if(levelNo > 0) messages.push(new Message(xpos-24, 500, "-1", "#ff0000"));
+		}
 		console.log("Score: "+(correctCount-wrongCount));
 		
 		world.DestroyBody(coins[c]);
 		coins[c] = undefined;
 	    }
+	}
+	if(frameCount % 100 == 0) {
+	    purgeMessages();
 	}
 	//drawUserPolys(ctx); // Not necessary as box2d draws them
 	setTimeout('step(' + (cnt || 0) + ',' +currentActiveThread+')', 10);
@@ -556,12 +610,14 @@ function drawToolbar(ctx) {
 	ctx.drawImage(logoImage, 0, 0);
     } else {
 	ctx.drawImage(toolbarImage, 0, 0);
+	ctx.save();
+	ctx.globalAlpha = 0.4
 	ctx.beginPath();
-	ctx.arc(toolbarSelect*64+32,32, 32, 0, 2 * Math.PI, false);
-	ctx.lineWidth = 5;
-	ctx.strokeStyle = '#003300';
-	ctx.stroke();
-	ctx.strokeStyle = '#ffffff';
+	ctx.rect(toolbarSelect*64,0,64,64);
+	ctx.fillStyle = '#ffff00';
+	ctx.fill();
+	ctx.fillStyle = '#ffffff';
+	ctx.restore();
     }
 
 }
