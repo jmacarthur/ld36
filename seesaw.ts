@@ -248,7 +248,7 @@ function drawAllCoins(ctx) {
 	var coinName = levels[levelNo][c];
 	var radius = coinTypes[coinName].radius;
 	xpos += radius*1.1+10;
-	drawCoin(ctx, xpos, 450, coinName);
+	drawCoin(ctx, xpos, 520, coinName);
 	xpos += radius*1.1+10;
     }
 }
@@ -305,7 +305,7 @@ function step(cnt, threadID : number) {
 	drawEverything();
 	for(var c : number=0;c<coins.length;c++) {
 	    
-	    if(coins[c] !== undefined && coins[c].m_position.y > 400) {
+	    if(coins[c] !== undefined && coins[c].m_position.y > 550) {
 		var xpos = coins[c].m_position.x;
 		var slot = Math.floor((xpos + 25)/ 60);
 		console.log("Coin ("+coins[c].type+") reached bottom of screen at xpos "+xpos+" - slot "+slot);
@@ -338,6 +338,12 @@ function returnToTitleScreen() : void {
 
 function toolbarFunction(fn: number):void {
     console.log("Toolbar function "+fn);
+    if(physicsOn) {
+	stopPhysics();
+	resetLevel();
+	toolbarSelect = 0;
+	if(fn==4) return;
+    }
     if(fn==0) {
 	finishCurrentPoly();
 	toolbarSelect = 0;
@@ -352,7 +358,10 @@ function toolbarFunction(fn: number):void {
 	toolbarSelect = 3;
 	drawToolbar(ctx);
     } else if (fn==4) {
-	togglePhysics();
+	if(!physicsOn) {
+	    startPhysics();
+	    toolbarSelect = 4;
+	}
     } else if (fn==5) {	
 	returnToTitleScreen();
     }
@@ -490,8 +499,8 @@ function createWorld(levelNo:number=0) {
     createGround(world);
 
     // Side walls
-    createBox(world, 0, 125+offsetY, 10, 250, true);
-    createBox(world, 640, 125+offsetY, 10, 250, true);
+    createBox(world, 0, 125+offsetY, 10, 550, true);
+    createBox(world, 640, 125+offsetY, 10, 550, true);
 
     if(levelNo == 0) {
 	// Title screen
@@ -502,13 +511,13 @@ function createWorld(levelNo:number=0) {
     } else {
 	// Create slots for each coin
 	var xpos : number = 0;
-	createBox(world, xpos, 500+offsetY, 10, 250, true);
+	createBox(world, xpos, 650+offsetY, 10, 250, true);
 	for(var c:number=0;c<levels[levelNo].length;c++) {
 	    var coinName = levels[levelNo][c];
 	    var radius = coinTypes[coinName].radius;
 	    console.log("box with radius "+radius);
 	    xpos += 20 + radius*2.2;
-	    createBox(world, xpos, 500+offsetY, 10, 250, true);
+	    createBox(world, xpos, 650+offsetY, 10, 250, true);
 	}
     }
     return world;
