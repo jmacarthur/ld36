@@ -12,6 +12,7 @@ var b2AABB;
 var b2Vec2;
 var b2World;
 
+var currentActiveThread : number = 0;
 
 class Pos {
     constructor(x:number, y:number) {
@@ -281,8 +282,8 @@ function drawEverything()
     }
 }
 
-function step(cnt) {
-    if(physicsOn) {
+function step(cnt, threadID : number) {
+    if(physicsOn && threadID == currentActiveThread) {
 	var stepping = false;
 	var timeStep = 1.0/60;
 	var iteration = 1;
@@ -316,13 +317,15 @@ function step(cnt) {
 	    }
 	}
 	//drawUserPolys(ctx); // Not necessary as box2d draws them
-	setTimeout('step(' + (cnt || 0) + ')', 10);
+	setTimeout('step(' + (cnt || 0) + ',' +currentActiveThread+')', 10);
     }
 }
 
 function returnToTitleScreen() : void {
     mode = GameMode.Title;
+    // Problem here is that physics is still running - you'd need to stop the physics then wait for it to exit...
     levelNo = 0;
+    clearLevel();
     resetLevel();
     drawEverything();
     drawToolbar(toolbarContext);
@@ -347,7 +350,7 @@ function toolbarFunction(fn: number):void {
 	drawToolbar(toolbarContext);
     } else if (fn==4) {
 	togglePhysics();
-    } else if (fn==5) {
+    } else if (fn==5) {	
 	returnToTitleScreen();
     }
     
@@ -450,7 +453,9 @@ function startPhysics()
 	coins = new Array();
 	physicsOn = true;
 	frameCount = 0;
-	step(0);
+	var t = ++currentActiveThread;
+	
+	step(0,t);
     }
 }
 
