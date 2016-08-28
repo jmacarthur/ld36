@@ -283,6 +283,109 @@ function purgeMessages()
     messages = newMessages;
 }
 
+function drawTitleScreen() : void
+{
+    for(var i=0;i<3;i++) {
+	ctx.font = "40px 'IM Fell English SC'";
+	ctx.save();
+	ctx.globalAlpha = 0.4;
+	ctx.beginPath();	    
+	ctx.rect(0,i*96+128,640,64);
+	ctx.strokeStyle = "#808000";
+	ctx.fillStyle = "#c0c000";
+	ctx.fill();
+	ctx.stroke();
+	ctx.fillStyle = 'Black';
+	var menuItem :string = "Prototype "+(i+1)+": ";
+	if(levelScores[i]==-1) {
+	    menuItem += "Untried";
+	} else {
+	    menuItem += "Best score "+levelScores[i];
+	    if(levelScores[i]==20) {
+		menuItem += " Perfect!";
+	    }
+	}
+	
+	ctx.fillText(menuItem, 20, 96*i+128-(64-40)/2+64);
+	
+	ctx.restore();
+	
+	
+    }
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();	    
+    ctx.rect(0,3*96+128,300,64);
+    ctx.rect(340,3*96+128,300,64);
+    ctx.fillStyle = "#c0c000";
+    ctx.fill();
+    ctx.fillStyle = 'Black';
+    ctx.fillText("Story", 20, 96*3+128-(64-40)/2+64);
+    ctx.fillText("Instructions", 350, 96*3+128-(64-40)/2+64);
+    ctx.restore();
+}
+
+function drawStoryScreen() : void
+{
+    var storyText = "Welcome, engineer! Since Hero's\nwater vending machine ";
+    storyText += "was\ninstalled, we've become overrun\n with coins. Can you\n";
+    storyText += "make us a coin sorting machine?";
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();	    
+    ctx.fillStyle = "#c0c000";
+    ctx.rect(0,3*96+128,300,64);
+    ctx.rect(340,3*96+128,300,64);
+    ctx.fill();
+    ctx.rect(0,96,640,280);
+    ctx.fillStyle = "#c0c000";
+    ctx.fill();
+    ctx.fillStyle = 'Black';
+    var lines = storyText.split("\n");
+    for(var l=0;l<lines.length;l++) {
+	ctx.fillText(lines[l], 20, 128+32+l*48);
+    }
+    ctx.fillText("Back", 20, 96*3+128-(64-40)/2+64);
+    ctx.fillText("Instructions", 350, 96*3+128-(64-40)/2+64);
+    ctx.restore();
+}
+
+function drawInstructionScreen() : void
+{
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    ctx.fillStyle = "#c0c000";
+    ctx.rect(0,3*96+128,300,64);
+    ctx.fill();
+    ctx.rect(0,96,640,280);
+    ctx.fillStyle = "#c0c000";
+    ctx.fill();
+    ctx.fillStyle = 'Black';
+    ctx.fillText("Back", 20, 96*3+128-(64-40)/2+64);
+    ctx.restore();
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.translate(20,96);
+    ctx.rotate(Math.PI/2);
+    ctx.fillStyle = 'Black';
+    ctx.fillText("< Draw stone shapes", 0, 0);
+    ctx.translate(0,-64);
+    ctx.fillText("< Cancel shape", 0, 0);
+    ctx.translate(0,-64);
+    ctx.fillText("< Pin shapes", 0, 0);
+    ctx.translate(0,-64);
+    ctx.fillText("< Remove shapes", 0, 0);
+    ctx.translate(0,-64);
+    ctx.fillText("< Start machine", 0, 0);
+    ctx.translate(0,-64);
+    ctx.fillText("< Return to title", 0, 0);
+    ctx.restore();
+
+}
+
+
 function drawEverything()
 {
     ctx.clearRect(64*6, 0, canvasWidth, canvasHeight);
@@ -297,30 +400,11 @@ function drawEverything()
     drawNails(ctx);
     drawAllCoins(ctx);
     if(mode==GameMode.Title) {
-	for(var i=0;i<3;i++) {
-	    ctx.font = "40px 'IM Fell English SC'";
-	    ctx.save();
-	    ctx.globalAlpha = 0.4;
-	    ctx.beginPath();	    
-	    ctx.rect(0,i*96+128,640,64);
-	    ctx.strokeStyle = "#808000";
-	    ctx.fillStyle = "#c0c000";
-	    ctx.fill();
-	    ctx.stroke();
-	    ctx.fillStyle = 'Black';
-	    var menuItem :string = "Prototype "+(i+1)+": ";
-	    if(levelScores[i]==-1) {
-		menuItem += "Untried";
-	    } else {
-		menuItem += "Best score "+levelScores[i];
-		if(levelScores[i]==20) {
-		    menuItem += " Perfect!";
-		}
-	    }
-	    
-	    ctx.fillText(menuItem, 20, 96*i+128-(64-40)/2+64);
-	    ctx.restore();
-	}
+	drawTitleScreen();
+    } else if(mode == GameMode.Story) {
+	drawStoryScreen();
+    } else if(mode == GameMode.Instructions) {
+	drawInstructionScreen();
     }
     drawToolbar(ctx);
     ctx.fillStyle = "#c0c000";
@@ -705,6 +789,17 @@ function addPointToCurrentPoly(pos: Pos)
 	currentPoly.points.push(pos);
 }
 
+function showStory()
+{
+    mode = GameMode.Story;
+    drawEverything();
+}
+
+function showInstructions()
+{
+    mode = GameMode.Instructions;
+    drawEverything();
+}
 
 var currentPoly : Polygon;
 var world;
@@ -713,7 +808,9 @@ var logoImage = new Image();
 
 enum GameMode {
     Title,
-    Level
+    Level,
+    Story,
+    Instructions
 }
 
 var mode : GameMode = GameMode.Title;
@@ -744,6 +841,24 @@ window.onload=function() {
 		clearLevel();
 		resetLevel();
 	    }
+	    else if(selected==4) {
+		if(pos.x < 320) {
+		    showStory();
+		} else {
+		    showInstructions();
+		}
+		
+	    }
+	} else if(mode == GameMode.Story) {
+	    if(pos.x > 320) {
+		showInstructions();
+	    } else {
+		mode = GameMode.Title;
+		drawEverything();
+	    }
+	} else if(mode == GameMode.Instructions) {
+	    mode = GameMode.Title;
+	    drawEverything();
 	} else {
 	    if(pos.y > offsetY) {
 		if(toolbarSelect == 0) {		
