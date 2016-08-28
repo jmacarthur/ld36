@@ -249,15 +249,25 @@ function drawAllCoins(ctx) {
 
 function drawEverything()
 {
-    for(var y=0;y<512;y+=128) {
-	for(var x=0;x<640;x+=128) {
-	    ctx.drawImage(backgroundTile, x, y);
+    if(mode==GameMode.Title) {
+	for(var i=0;i<3;i++) {
+	    ctx.beginPath();
+	    ctx.rect(0,i*64,640,64);
+	    if(i%2 == 0) ctx.fillStyle='yellow';
+	    else ctx.fillStyle='black';
+	    ctx.fill();
 	}
+    } else {
+	for(var y=0;y<512;y+=128) {
+	    for(var x=0;x<640;x+=128) {
+		ctx.drawImage(backgroundTile, x, y);
+	    }
+	}
+	drawWorld(world, ctx);
+	drawCurrentPoly(ctx);
+	drawNails(ctx);
+	drawAllCoins(ctx);
     }
-    drawWorld(world, ctx);
-    drawCurrentPoly(ctx);
-    drawNails(ctx);
-    drawAllCoins(ctx);
 }
 
 function step(cnt) {
@@ -320,7 +330,8 @@ function toolbarFunction(fn: number):void {
     } else if (fn==5) {
 	physicsOn = false;
 	mode = GameMode.Title;
-	ctx.drawImage(titleImage, 0,0);
+	drawEverything();
+	drawToolbar(toolbarContext);
     }
     
 }
@@ -471,14 +482,18 @@ function createGround(world) {
 }
 
 function drawToolbar(ctx) {
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    ctx.drawImage(toolbarImage, 0, 0);
-    ctx.beginPath();
-    ctx.arc(toolbarSelect*64+32,32, 32, 0, 2 * Math.PI, false);
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = '#003300';
-    ctx.stroke();
-    ctx.strokeStyle = '#ffffff';
+    if(mode == GameMode.Title) {
+	ctx.drawImage(logoImage, 0, 0);
+    } else {
+	ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+	ctx.drawImage(toolbarImage, 0, 0);
+	ctx.beginPath();
+	ctx.arc(toolbarSelect*64+32,32, 32, 0, 2 * Math.PI, false);
+	ctx.lineWidth = 5;
+	ctx.strokeStyle = '#003300';
+	ctx.stroke();
+	ctx.strokeStyle = '#ffffff';
+    }
 
 }
 
@@ -570,6 +585,7 @@ var currentPoly : Polygon;
 var world;
 var userPolys : Polygon[];
 var toolbarContext;
+var logoImage = new Image();
 
 enum GameMode {
     Title,
@@ -580,6 +596,7 @@ var mode : GameMode = GameMode.Title;
 window.onload=function() {
     world = createWorld();
     toolbarImage.src = 'graphics/toolbar.png';
+    logoImage.src = 'graphics/logo.png';
     titleImage.src = 'graphics/title.png';
     initWorld(world);
     ctx = $('canvas').getContext('2d');
@@ -596,7 +613,7 @@ window.onload=function() {
 	toolbarFunction(fn);
     });
     toolbarImage.onload = function() { drawToolbar(toolbarContext); };
-    titleImage.onload = function() { ctx.drawImage(titleImage,0,0); };
+    titleImage.onload = function() { drawEverything(); };
     userPolys = new Array<Polygon>();
     canvas.addEventListener('click', function(e) {
 	var pos: Pos = new Pos();
@@ -616,6 +633,8 @@ window.onload=function() {
 		    currentPoly = new Polygon();
 		    currentPoly.points = new Array<Pos>();
 		}
+		// TODO: if you click inside a polygon here, I'd like it to select a corner
+		// and allow editing
 		addPointToCurrentPoly(pos);
 		drawEverything();
 	    } else if (toolbarSelect == 2) {
@@ -626,6 +645,7 @@ window.onload=function() {
 		removePolygonOrNail(pos);
 	    }
 	}
+	drawToolbar(toolbarContext);
     });
     canvas.addEventListener('mousemove', function(e) {
 	var pos: Pos = new Pos();
