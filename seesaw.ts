@@ -428,6 +428,21 @@ function drawEverything()
 	    message.age += 1;
 	}
     }
+
+    if(selectedPolyPoint !== undefined) {
+	if(selectedPolyPoint[0] > userPolys.length) {
+	    console.log("Selected poly "+selectedPolyPoint[0]+" does not exist");
+	}
+	console.log("Attempting to select poly no. "+selectedPolyPoint[0]+" - "+userPolys[selectedPolyPoint[0]]);
+	if(userPolys[selectedPolyPoint[0]] === undefined) return;
+	var pos = userPolys[selectedPolyPoint[0]].points[selectedPolyPoint[1]];
+	ctx.beginPath();
+	console.log("Printing selected poly point at "+pos.x+","+pos.y);
+	ctx.arc(pos.x, pos.y, 8, 0, 2 * Math.PI, false);
+	ctx.strokeStyle = "#c00000";
+	ctx.stroke();
+    }
+
 }
 
 function step(cnt, threadID : number) {
@@ -486,6 +501,7 @@ function returnToTitleScreen() : void {
     drawEverything();
     drawToolbar(ctx);
     startPhysics();
+    selectedPolyPoint = undefined;
 }
     
 
@@ -598,6 +614,23 @@ if (canvas.getContext('2d')) {
 	if(c == 86) {
 	    toolbarFunction(3);
 	}
+	if(!physicsOn && (c==37 || c==39 || c==38 || c==40)) {
+	    if(selectedPolyPoint !== undefined) {
+		var pos = userPolys[selectedPolyPoint[0]].points[selectedPolyPoint[1]];
+		if(c==37) {
+		    pos.x -= 1;
+		} else if (c==39) {
+		    pos.x += 1;
+		} else if (c==38) {
+		    pos.y -= 1;
+		} else if (c==40) {
+		    pos.y += 1;
+		}
+	
+		userPolys[selectedPolyPoint[0]].points[selectedPolyPoint[1]] = pos;
+		resetLevel();
+	    }
+	}
     }
     body.onkeyup = function (event) {
 	var c = event.keyCode;
@@ -612,6 +645,7 @@ var coinsOut : number = 0;
 function startPhysics()
 {
     if(!physicsOn) {
+	selectedPolyPoint = undefined;
 	correctCount = 0;
 	wrongCount = 0;
 	coinsOut = 0;
@@ -739,6 +773,7 @@ function removePolygonOrNail(pos: Pos)
     for(var p : number = 0; p < userPolys.length; p++) {
 	var poly = userPolys[p];
 	if(pointInsidePolygon(pos, poly)) {
+	    if(selectedPolyPoint && selectedPolyPoint[0] == p) selectedPolyPoint = undefined;
 	    deletePolygon(poly);
 	    return;
 	}
@@ -817,6 +852,39 @@ enum GameMode {
     Instructions
 }
 
+var selectedPolyPoint;
+
+function selectClosestPoint(polyNum:number, pos: Pos) {
+    var minDist : number = -1;
+    var poly:Polygon = userPolys[polyNum];
+    var closest : number;
+    for(var p:number = 0;p<poly.points.length;p++) {
+	var dx = poly.points[p].x - pos.x;
+	var dy = poly.points[p].y - pos.y;
+	var dist = dx*dx+dy*dy;
+	if(minDist == -1 || dist < minDist) {
+	    minDist = dist;
+	    closest = p;
+	}
+    }
+
+    selectedPolyPoint = [polyNum, closest];
+    resetLevel();
+
+}
+
+function selectPolyPoint(pos: Pos) {
+    for(var p=0;p<userPolys.length;p++)
+    {
+	if(pointInsidePolygon(pos, userPolys[p])) {
+	    console.log("Clicked inside existing polygon");
+	    selectClosestPoint(p, pos);
+	    return true;
+	}
+    }
+    return false;
+}
+
 var stoneSounds = new Array();
 stoneSounds[0] = new Audio("sound/stone1a.wav");
 stoneSounds[1] = new Audio("sound/stone2a.wav");
@@ -872,16 +940,18 @@ window.onload=function() {
 	    drawEverything();
 	} else {
 	    if(pos.y > offsetY) {
-		if(toolbarSelect == 0) {		
-		    if(currentPoly === undefined)
-		    {
-			currentPoly = new Polygon();
-			currentPoly.points = new Array<Pos>();
+		if(toolbarSelect == 0) {
+		    if(selectPolyPoint(pos)) {
+			// Do nothing else
+		    } else {
+			if(currentPoly === undefined) {
+			    // Start new polygon
+			    currentPoly = new Polygon();
+			    currentPoly.points = new Array<Pos>();
+			}
+			addPointToCurrentPoly(pos);
+			drawEverything();
 		    }
-		    // TODO: if you click inside a polygon here, I'd like it to select a corner
-		    // and allow editing
-		    addPointToCurrentPoly(pos);
-		    drawEverything();
 		} else if (toolbarSelect == 2) {
 		    // Remove polygon or nail at that position
 		    addNail(pos);
