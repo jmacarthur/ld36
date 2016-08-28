@@ -255,6 +255,7 @@ function drawAllCoins(ctx) {
 
 function drawEverything()
 {
+    ctx.clearRect(64*6, 0, canvasWidth, canvasHeight);
     for(var y=0;y<512;y+=128) {
 	for(var x=0;x<640;x+=128) {
 	    ctx.drawImage(backgroundTile, x, y+64);
@@ -280,6 +281,7 @@ function drawEverything()
 	    ctx.restore();
 	}
     }
+    drawToolbar(ctx);
 }
 
 function step(cnt, threadID : number) {
@@ -522,11 +524,10 @@ function createGround(world) {
 }
 
 function drawToolbar(ctx) {
-    ctx.clearRect(0,0,640,200);
+    ctx.clearRect(0,0,640,64);
     if(mode == GameMode.Title) {
 	ctx.drawImage(logoImage, 0, 0);
     } else {
-	ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 	ctx.drawImage(toolbarImage, 0, 0);
 	ctx.beginPath();
 	ctx.arc(toolbarSelect*64+32,32, 32, 0, 2 * Math.PI, false);
