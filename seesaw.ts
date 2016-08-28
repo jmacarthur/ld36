@@ -458,6 +458,7 @@ function step(cnt, threadID : number) {
 		if(coins[c].type == slot) {
 		    correctCount += 1;
 		    if(levelNo > 0) messages.push(new Message(xpos-24, 500, "+1", "#00ff00"));
+		    coinDropSound.play();
 		} else {
 		    wrongCount += 1;
 		    if(levelNo > 0) messages.push(new Message(xpos-24, 500, "-1", "#ff0000"));
@@ -638,6 +639,8 @@ function finishCurrentPoly()
     userPolys.push(currentPoly);
     solidifyPolygon(world, currentPoly);
     currentPoly = undefined;
+    stoneSounds[Math.floor(Math.random()*4)].play();
+
     drawEverything();
 }
 
@@ -745,6 +748,7 @@ function removePolygonOrNail(pos: Pos)
 function addNail(pos: Pos)
 {
     userNails.push(pos);
+    stoneSounds[0].play();
     recreateNails();
     drawEverything();
 }
@@ -812,6 +816,13 @@ enum GameMode {
     Story,
     Instructions
 }
+
+var stoneSounds = new Array();
+stoneSounds[0] = new Audio("sound/stone1a.wav");
+stoneSounds[1] = new Audio("sound/stone2a.wav");
+stoneSounds[2] = new Audio("sound/stone3a.wav");
+stoneSounds[3] = new Audio("sound/stone4a.wav");
+var coinDropSound = new Audio("sound/coindrop1a.wav");
 
 var mode : GameMode = GameMode.Title;
 window.onload=function() {
