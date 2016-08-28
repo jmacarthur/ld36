@@ -516,6 +516,7 @@ function createGround(world) {
 }
 
 function drawToolbar(ctx) {
+    ctx.clearRect(0,0,640,200);
     if(mode == GameMode.Title) {
 	ctx.drawImage(logoImage, 0, 0);
     } else {
