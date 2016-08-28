@@ -14,6 +14,10 @@ var b2World;
 
 
 class Pos {
+    constructor(x:number, y:number) {
+	this.x = x;
+	this.y = y;
+    }
     x: number;
     y: number;
 };
@@ -27,6 +31,7 @@ var coinTypes = {
 };
 
 var levels = [
+    ["Denarius", "Aureus", "Sesterius", "Dupondius", "As"],
     ["Denarius", "Sesterius"],
     ["Denarius", "Sesterius", "As"],
     ["Denarius", "Aureus", "Dupondius"],
@@ -50,10 +55,10 @@ function sgn(x:number): number
     else return 0;
 }
 
-function createBox(world, x, y, width, height, fixed = false) {
+function createBox(world, x, y, width, height, fixed = false, density:number = 1.0) {
     if (typeof(fixed) == 'undefined') fixed = true;
     var boxSd = new b2BoxDef();
-    if (!fixed) boxSd.density = 1.0;
+    if (!fixed) boxSd.density = density;
     boxSd.extents.Set(width, height);
     var boxBd = new b2BodyDef();
     boxBd.AddShape(boxSd);
@@ -249,29 +254,30 @@ function drawAllCoins(ctx) {
 
 function drawEverything()
 {
+    for(var y=0;y<512;y+=128) {
+	for(var x=0;x<640;x+=128) {
+	    ctx.drawImage(backgroundTile, x, y);
+	}
+    }
+    drawWorld(world, ctx);
+    drawCurrentPoly(ctx);
+    drawNails(ctx);
+    drawAllCoins(ctx);
     if(mode==GameMode.Title) {
 	for(var i=0;i<3;i++) {
 	    ctx.font = "40px 'IM Fell English SC'";
-	    ctx.beginPath();
-	    ctx.rect(0,i*64,640,64);
+	    ctx.save();
+	    ctx.globalAlpha = 0.4;
+	    ctx.beginPath();	    
+	    ctx.rect(0,i*96+64,640,64);
 	    ctx.strokeStyle = "#808000";
 	    ctx.fillStyle = "#c0c000";
 	    ctx.fill();
 	    ctx.stroke();
 	    ctx.fillStyle = 'Black';
-	    ctx.fillText('Prototype '+(i+1), 150, 64*i+64-(64-40)/2);
-
+	    ctx.fillText('Prototype '+(i+1), 150, 96*i+128-(64-40)/2);
+	    ctx.restore();
 	}
-    } else {
-	for(var y=0;y<512;y+=128) {
-	    for(var x=0;x<640;x+=128) {
-		ctx.drawImage(backgroundTile, x, y);
-	    }
-	}
-	drawWorld(world, ctx);
-	drawCurrentPoly(ctx);
-	drawNails(ctx);
-	drawAllCoins(ctx);
     }
 }
 
@@ -280,8 +286,7 @@ function step(cnt) {
 	var stepping = false;
 	var timeStep = 1.0/60;
 	var iteration = 1;
-	if(frameCount % 100 == 0 && coinsOut < 20) {
-	    
+	if(frameCount % 100 == 0 && (coinsOut < 20 || levelNo==0)) {
 	    var noCoinTypes = levels[levelNo].length;
 	    var c = Math.floor(Math.random()*noCoinTypes);
 	    var coinData = coinTypes[levels[levelNo][c]];
@@ -315,6 +320,16 @@ function step(cnt) {
     }
 }
 
+function returnToTitleScreen() : void {
+    mode = GameMode.Title;
+    levelNo = 0;
+    resetLevel();
+    drawEverything();
+    drawToolbar(toolbarContext);
+    startPhysics();
+}
+    
+
 function toolbarFunction(fn: number):void {
     console.log("Toolbar function "+fn);
     if(fn==0) {
@@ -333,10 +348,7 @@ function toolbarFunction(fn: number):void {
     } else if (fn==4) {
 	togglePhysics();
     } else if (fn==5) {
-	physicsOn = false;
-	mode = GameMode.Title;
-	drawEverything();
-	drawToolbar(toolbarContext);
+	returnToTitleScreen();
     }
     
 }
@@ -354,6 +366,7 @@ class Polygon {
 function resetLevel() : void
 {
     world = createWorld(levelNo);
+    stopPhysics();
     initWorld(world);
     recreatePolygons();
     recreateNails();
@@ -441,6 +454,13 @@ function startPhysics()
     }
 }
 
+function stopPhysics()
+{
+    if(physicsOn) {
+	physicsOn = false;
+    }
+}
+
 function finishCurrentPoly()
 {
     if(currentPoly === undefined) return;
@@ -451,27 +471,36 @@ function finishCurrentPoly()
 }
 
 function createWorld(levelNo:number=0) {
+    console.log("Creating world for level "+levelNo);
     var worldAABB = new b2AABB();
     worldAABB.minVertex.Set(-1000, -1000);
     worldAABB.maxVertex.Set(1000, 1000);
     var gravity = new b2Vec2(0, 300);
     var doSleep = true;
-    var world = new b2World(worldAABB, gravity, doSleep);
+    world = new b2World(worldAABB, gravity, doSleep);
     createGround(world);
 
     // Side walls
     createBox(world, 0, 125, 10, 250, true);
     createBox(world, 500, 125, 10, 250, true);
-    
-    // Create slots for each coin
-    var xpos : number = 0;
-    createBox(world, xpos, 500, 10, 250, true);
-    for(var c:number=0;c<levels[levelNo].length;c++) {
-	var coinName = levels[levelNo][c];
-	var radius = coinTypes[coinName].radius;
-	console.log("box with radius "+radius);
-	xpos += 20 + radius*2.2;
+
+    if(levelNo == 0) {
+	// Title screen
+	createPoly(world, 64,64, [[200,20], [400,0], [400,20]], true);	    
+	createPoly(world, 0,128, [[0,0], [250,40], [0,40]], true);	    
+	var seesaw = createBox(world, 300,300, 100,10, false, 0.1);
+	pin(seesaw, world.GetGroundBody(), new Pos(300,300));
+    } else {
+	// Create slots for each coin
+	var xpos : number = 0;
 	createBox(world, xpos, 500, 10, 250, true);
+	for(var c:number=0;c<levels[levelNo].length;c++) {
+	    var coinName = levels[levelNo][c];
+	    var radius = coinTypes[coinName].radius;
+	    console.log("box with radius "+radius);
+	    xpos += 20 + radius*2.2;
+	    createBox(world, xpos, 500, 10, 250, true);
+	}
     }
     return world;
 }
@@ -621,16 +650,16 @@ window.onload=function() {
     titleImage.onload = function() { drawEverything(); };
     userPolys = new Array<Polygon>();
     canvas.addEventListener('click', function(e) {
-	var pos: Pos = new Pos();
-	pos.x = e.x - canvasLeft;
-	pos.y = e.y - canvasTop;
-
+	var pos: Pos = new Pos(e.x - canvasLeft, e.y - canvasTop);
 	if(mode == GameMode.Title) {
-	    levelNo = Math.floor(pos.y / 64.0);
-	    console.log("Beginning level "+levelNo);
-	    mode = GameMode.Level;
-	    clearLevel();
-	    resetLevel();
+	    var selected = Math.floor((pos.y - 64)/ 96.0)+1;
+	    if(selected>0 && selected <=3 ) {
+		levelNo = selected;
+		console.log("Beginning level "+levelNo);
+		mode = GameMode.Level;
+		clearLevel();
+		resetLevel();
+	    }
 	} else {
 	    if(toolbarSelect == 0) {
 		if(currentPoly === undefined)
@@ -653,9 +682,7 @@ window.onload=function() {
 	drawToolbar(toolbarContext);
     });
     canvas.addEventListener('mousemove', function(e) {
-	var pos: Pos = new Pos();
-	pos.x = e.x - canvasLeft;
-	pos.y = e.y - canvasTop;
+	var pos: Pos = new Pos(e.x - canvasLeft, e.y - canvasTop);
 	if(toolbarSelect == 0 && currentPoly !== undefined
 	   && currentPoly.points.length > 1) {
 	    console.log("Drawing next line pos");
@@ -668,4 +695,5 @@ window.onload=function() {
 	console.log("Right click");
 	finishCurrentPoly();
     });
+    returnToTitleScreen();
 };
