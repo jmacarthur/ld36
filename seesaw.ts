@@ -13,6 +13,7 @@ var b2Vec2;
 var b2World;
 
 var currentActiveThread : number = 0;
+var radiusMultiplier = 1.5;
 
 class Pos {
     constructor(x:number, y:number) {
@@ -61,7 +62,7 @@ function drawCoin(ctx,  cx:number, cy:number, name:string) : void
 {
     ctx.save();
     ctx.translate(cx,cy);
-    var r = coinTypes[name].radius;
+    var r = coinTypes[name].radius*radiusMultiplier;
     var bitmap = coinTypes[name].image;
     ctx.drawImage(bitmap, -r, -r, r*2, r*2);
     ctx.restore();
@@ -266,7 +267,7 @@ function drawAllCoins(ctx) {
     var xpos = 0;
     for(var c:number=0;c<levels[levelNo].length;c++) {
 	var coinName = levels[levelNo][c];
-	var radius = coinTypes[coinName].radius;
+	var radius = coinTypes[coinName].radius*radiusMultiplier;
 	xpos += radius*1.1+10;
 	drawCoin(ctx, xpos, 520, coinName);
 	xpos += radius*1.1+10;
@@ -454,7 +455,7 @@ function step(cnt, threadID : number) {
 	    var noCoinTypes = levels[levelNo].length;
 	    var c = Math.floor(Math.random()*noCoinTypes);
 	    var coinData = coinTypes[levels[levelNo][c]];
-	    var coin = createBall(world, 390, 10, coinData.radius, false, coinData.weight / (Math.PI*coinData.radius*coinData.radius));
+	    var coin = createBall(world, 390, 10, coinData.radius*radiusMultiplier, false, coinData.weight / (Math.PI*coinData.radius*coinData.radius));
 	    coin.type = c;
 	    coin.image = coinData.image;
 	    coinsOut += 1;
@@ -706,7 +707,7 @@ function createWorld(levelNo:number=0) {
 	createBox(world, xpos, 650+offsetY, 10, 250, true);
 	for(var c:number=0;c<levels[levelNo].length;c++) {
 	    var coinName = levels[levelNo][c];
-	    var radius = coinTypes[coinName].radius;
+	    var radius = coinTypes[coinName].radius*radiusMultiplier;
 	    console.log("box with radius "+radius);
 	    xpos += 20 + radius*2.2;
 	    createBox(world, xpos, 650+offsetY, 10, 250, true);
