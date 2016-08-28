@@ -56,7 +56,6 @@ function drawJoint(joint, context) {
 }
 function drawShape(shape, context) {
 	context.strokeStyle = '#ffffff';
-	context.beginPath();
 	switch (shape.m_type) {
 	case b2Shape.e_circleShape:
 		{
@@ -76,15 +75,20 @@ function drawShape(shape, context) {
 		{
 			var poly = shape;
 			var tV = b2Math.AddVV(poly.m_position, b2Math.b2MulMV(poly.m_R, poly.m_vertices[0]));
+		    context.beginPath();
 			context.moveTo(tV.x, tV.y);
 			for (var i = 0; i < poly.m_vertexCount; i++) {
 				var v = b2Math.AddVV(poly.m_position, b2Math.b2MulMV(poly.m_R, poly.m_vertices[i]));
 				context.lineTo(v.x, v.y);
 			}
 			context.lineTo(tV.x, tV.y);
+		    context.fillStyle = '#c8c080';
+		    context.strokeStyle = '#908040';
+		    context.stroke();
+		    context.fill();
 		}
 		break;
 	}
-	context.stroke();
+
 }
 

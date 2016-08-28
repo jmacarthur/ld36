@@ -113,6 +113,10 @@ var canvasLeft;
 var toolbarImage = new Image();
 var titleImage = new Image();
 var frameCount : number = 0;
+
+var backgroundTile = new Image();
+backgroundTile.src="graphics/wall1.png";
+
 function drawCircle(ctx, pos:Pos, radius)
 {
     ctx.beginPath();
@@ -213,7 +217,11 @@ function recreateNails()
 
 function drawEverything()
 {
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    for(var y=0;y<512;y+=128) {
+	for(var x=0;x<640;x+=128) {
+	    ctx.drawImage(backgroundTile, x, y);
+	}
+    }
     drawWorld(world, ctx);
     drawCurrentPoly(ctx);
     drawNails(ctx);
@@ -524,6 +532,7 @@ window.onload=function() {
     titleImage.src = 'graphics/title.png';
     initWorld(world);
     ctx = $('canvas').getContext('2d');
+    ctx.lineJoin="round";
     var canvasElm = $('canvas');
     canvasWidth = parseInt(canvasElm.width);
     canvasHeight = parseInt(canvasElm.height);
