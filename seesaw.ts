@@ -38,7 +38,7 @@ var levels = [
     ["Denarius", "Aureus", "Dupondius"],
 ];
 
-var levelScores = [ -1, -1, 20 ];
+var levelScores = [ -1, -1, -1 ];
 
 function drawCoin(ctx,  cx:number, cy:number, name:string) : void
 {
