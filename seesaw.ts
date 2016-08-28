@@ -1,8 +1,9 @@
+/// <reference path="draw_world.ts"/>
+
 var b2CircleDef;
 var b2BodyDef;
 var b2PolyDef;
 
-var drawWorld;
 var b2RevoluteJointDef;
 var $;
 
