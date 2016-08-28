@@ -242,7 +242,7 @@ function drawAllCoins(ctx) {
 	var coinName = levels[levelNo][c];
 	var radius = coinTypes[coinName].radius;
 	xpos += radius*1.1+10;
-	drawCoin(ctx, xpos, 500, coinName);
+	drawCoin(ctx, xpos, 450, coinName);
 	xpos += radius*1.1+10;
     }
 }
@@ -251,11 +251,16 @@ function drawEverything()
 {
     if(mode==GameMode.Title) {
 	for(var i=0;i<3;i++) {
+	    ctx.font = "40px 'IM Fell English SC'";
 	    ctx.beginPath();
 	    ctx.rect(0,i*64,640,64);
-	    if(i%2 == 0) ctx.fillStyle='yellow';
-	    else ctx.fillStyle='black';
+	    ctx.strokeStyle = "#808000";
+	    ctx.fillStyle = "#c0c000";
 	    ctx.fill();
+	    ctx.stroke();
+	    ctx.fillStyle = 'Black';
+	    ctx.fillText('Prototype '+(i+1), 150, 64*i+64-(64-40)/2);
+
 	}
     } else {
 	for(var y=0;y<512;y+=128) {
