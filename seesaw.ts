@@ -469,7 +469,18 @@ function step(cnt, threadID : number) {
 	    
 	    if(coins[c] !== undefined && coins[c].m_position.y > 550) {
 		var xpos = coins[c].m_position.x;
-		var slot = Math.floor((xpos + 25)/ 60);
+		var slot = -1;
+		var slotXpos = 0;
+		// Duplicated code from coin guide drawing thing
+		for(var cn:number=0;cn<levels[levelNo].length;cn++) {
+		    var coinName = levels[levelNo][cn];
+		    var radius = coinTypes[coinName].radius*radiusMultiplier;
+		    slotXpos += radius*1.1+10;
+		    if(Math.abs(slotXpos - xpos)<10) {
+			slot = cn;
+		    }
+		    slotXpos += radius*1.1+10;
+		}
 		console.log("Coin ("+coins[c].type+") reached bottom of screen at xpos "+xpos+" - slot "+slot);
 		if(coins[c].type == slot) {
 		    correctCount += 1;
