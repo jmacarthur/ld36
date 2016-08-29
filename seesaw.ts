@@ -976,7 +976,9 @@ window.onload=function() {
 	    drawNextLine(pos);
 	}
     });
+
     canvas.addEventListener('contextmenu', function(e) {
+	e.preventDefault();
 	/* Right click - does nothing. */
 	console.log("Right click");
 	finishCurrentPoly();
